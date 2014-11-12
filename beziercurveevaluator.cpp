@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define BEZIER_LINEAR_EPSILON (1e-5)
+#define BEZIER_LINEAR_EPSILON (1e-4)
 #define MAX_EVALUATE_RECURSION_DEPTH 1000
 
 void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
@@ -70,6 +70,8 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
         // If not, we'll just reuse last v3's Y value.
         ptvEvaluatedCurvePts.push_back(Point(fAniLength, bWrap ? wrapYValue : lastV3.y));
     }
+    
+    cerr << "Produced " << ptvEvaluatedCurvePts.size() << " points." << endl;
 }
 
 bool BezierCurveEvaluator::isApproximatelyLinear(const Point& v0, const Point& v1, const Point& v2, const Point& v3) const
