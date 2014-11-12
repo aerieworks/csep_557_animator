@@ -22,6 +22,12 @@ public:
 		float yd = y - p.y;
 		return sqrtf(xd * xd + yd * yd);
 	}
+    
+    Point midpoint(const Point &p) const {
+        const float midx = (x + p.x) / 2.0;
+        const float midy = (y + p.y) / 2.0;
+        return Point(midx, midy);
+    }
 
 	float x;
 	float y;
