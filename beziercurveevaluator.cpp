@@ -56,7 +56,7 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
         const Point v1 = ptvCtrlPts[min(lastPointIndex, bezierStart + 1)];
         const Point v2 = ptvCtrlPts[min(lastPointIndex, bezierStart + 2)];
         const Point v3 = ptvCtrlPts[min(lastPointIndex, bezierStart + 3)];
-        evaluateBezierCurve(ptvEvaluatedCurvePts, v0, v1, v2, v3, 0);
+        evaluateBezierCurve(ptvEvaluatedCurvePts, v0, v1, v2, v3, v3.x, 0);
         
         // Beziers require 4 points, but we want to reuse v3 from the previous curve as v0 for the next curve.
         // This ensures C0 continuity.
@@ -79,16 +79,23 @@ bool BezierCurveEvaluator::isApproximatelyLinear(const Point& v0, const Point& v
     return (linearDistance == 0.0) || (actualDistance / linearDistance < 1.0 + BEZIER_LINEAR_EPSILON);
 }
 
-void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3, const int depth) const
+void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3, const float maxX, const int depth) const
 {
     if (depth >= MAX_EVALUATE_RECURSION_DEPTH || isApproximatelyLinear(v0, v1, v2, v3))
     {
-        const Point lastPoint = evaluatedPoints[evaluatedPoints.size() - 1];
-        if (v0.x >= lastPoint.x)
+        // This section of the curve is linear enough (or we've iterated enough) that we are just going to render it as
+        // a line from v0 to v3.
+        
+        // We want to maintain monotonicity along the X axis.  Only include each point if:
+        // 1) The point comes after the last point we added, on the X axis.
+        // 2) The point DOES NOT come after "maxX" (which is the X for the last control point).
+        //      - This ensures that we can always include the last control point on the line, ensuring interpolation.
+        //      - Catmull-Rom gets really funky around edge cases if you don't handle this case in some way.
+        if (v0.x >= evaluatedPoints[evaluatedPoints.size() - 1].x && v0.x <= maxX)
         {
             evaluatedPoints.push_back(Point(v0));
         }
-        if (v3.x >= v0.x && v3.x >= lastPoint.x)
+        if (v3.x >= evaluatedPoints[evaluatedPoints.size() - 1].x && v3.x <= maxX)
         {
             evaluatedPoints.push_back(Point(v3));
         }
@@ -104,7 +111,7 @@ void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoin
         r1 = apex.midpoint(r2);
         l3 = r0 = l2.midpoint(r1);
         
-        evaluateBezierCurve(evaluatedPoints, l0, l1, l2, l3, depth + 1);
-        evaluateBezierCurve(evaluatedPoints, r0, r1, r2, r3, depth + 1);
+        evaluateBezierCurve(evaluatedPoints, l0, l1, l2, l3, maxX, depth + 1);
+        evaluateBezierCurve(evaluatedPoints, r0, r1, r2, r3, maxX, depth + 1);
     }
 }

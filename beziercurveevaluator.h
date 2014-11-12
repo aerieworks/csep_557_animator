@@ -14,7 +14,7 @@
 class BezierCurveEvaluator : public CurveEvaluator
 {
     bool isApproximatelyLinear(const Point& v0, const Point& v1, const Point& v2, const Point& v3) const;
-    void evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3, int depth) const;
+    void evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3, const float maxX, const int depth) const;
 public:
 	void evaluateCurve(const std::vector<Point>& ptvCtrlPts, 
 		std::vector<Point>& ptvEvaluatedCurvePts, 
