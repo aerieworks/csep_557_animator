@@ -16,8 +16,12 @@ public:
 
 	void toStream(std::ostream& output_stream) const;
 	void fromStream(std::istream& input_stream);
+    
+    friend Point operator+(const Point& lhs, const Point& rhs);
+    friend Point operator-(const Point& lhs, const Point& rhs);
+    friend Point operator/(const Point& lhs, const float rhs);
 
-	float distance(const Point& p) const {
+    float distance(const Point& p) const {
 		float xd = x - p.x;
 		float yd = y - p.y;
 		return sqrtf(xd * xd + yd * yd);

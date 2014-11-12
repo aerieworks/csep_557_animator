@@ -6,6 +6,7 @@
 using namespace std;
 
 #define BEZIER_LINEAR_EPSILON (1e-5)
+#define MAX_EVALUATE_RECURSION_DEPTH 1000
 
 void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
 										 std::vector<Point>& ptvEvaluatedCurvePts, 
@@ -20,30 +21,11 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
     {
         cerr << "  (" << (*it).x << ", " << (*it).y << ")" << endl;
     }
-    
-    // Iterate over the control points, constructing bezier curves along the way.
-    size_t bezierStart = 0;
-    const size_t lastPointIndex = controlPointCount - 1;
-    while (bezierStart < controlPointCount)
-    {
-        // Evaluate the bezier curve formed by the current four control points.
-        // Reuse the last point in the list if necessary to provide four points.
-        const Point v0 = ptvCtrlPts[bezierStart];
-        const Point v1 = ptvCtrlPts[min(lastPointIndex, bezierStart + 1)];
-        const Point v2 = ptvCtrlPts[min(lastPointIndex, bezierStart + 2)];
-        const Point v3 = ptvCtrlPts[min(lastPointIndex, bezierStart + 3)];
-        evaluateBezierCurve(ptvEvaluatedCurvePts, v0, v1, v2, v3);
-        
-        // Beziers require 4 points, but we want to reuse v3 from the previous curve as v0 for the next curve.
-        // This ensures C0 continuity.
-        bezierStart += 3;
-    }
-    
 
     // Find v0 for the first curve and v3 for the last bezier curve.
     const Point firstV0 = ptvCtrlPts[0];
     const Point lastV3 = ptvCtrlPts[controlPointCount - 1];
-
+    
     float wrapLineSlope;
     float wrapYValue;
     if (bWrap)
@@ -60,11 +42,27 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
         // The first Bezier doesn't start at time=0, so let's fill in that space with something sensible.
         // If wrapping is enabled, we'll connect first v0 to the Y value given by the wrapping line function.
         // If not, we'll just reuse first v0's Y value.
-        ptvEvaluatedCurvePts.insert(ptvEvaluatedCurvePts.end(), Point(0.0, bWrap ? wrapYValue : firstV0.y));
+        ptvEvaluatedCurvePts.push_back(Point(0.0, bWrap ? wrapYValue : firstV0.y));
+    }
+
+    // Iterate over the control points, constructing bezier curves along the way.
+    size_t bezierStart = 0;
+    const size_t lastPointIndex = controlPointCount - 1;
+    while (bezierStart < controlPointCount)
+    {
+        // Evaluate the bezier curve formed by the current four control points.
+        // Reuse the last point in the list if necessary to provide four points.
+        const Point v0 = ptvCtrlPts[bezierStart];
+        const Point v1 = ptvCtrlPts[min(lastPointIndex, bezierStart + 1)];
+        const Point v2 = ptvCtrlPts[min(lastPointIndex, bezierStart + 2)];
+        const Point v3 = ptvCtrlPts[min(lastPointIndex, bezierStart + 3)];
+        evaluateBezierCurve(ptvEvaluatedCurvePts, v0, v1, v2, v3, 0);
+        
+        // Beziers require 4 points, but we want to reuse v3 from the previous curve as v0 for the next curve.
+        // This ensures C0 continuity.
+        bezierStart += 3;
     }
     
-    
-
     if (lastV3.x < fAniLength)
     {
         // The last Bezier doesn't end at time=END, so let's fill in that space with something sensible.
@@ -81,9 +79,9 @@ bool BezierCurveEvaluator::isApproximatelyLinear(const Point& v0, const Point& v
     return (linearDistance == 0.0) || (actualDistance / linearDistance < 1.0 + BEZIER_LINEAR_EPSILON);
 }
 
-void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3) const
+void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3, const int depth) const
 {
-    if (isApproximatelyLinear(v0, v1, v2, v3))
+    if (depth >= MAX_EVALUATE_RECURSION_DEPTH || isApproximatelyLinear(v0, v1, v2, v3))
     {
         const Point lastPoint = evaluatedPoints[evaluatedPoints.size() - 1];
         if (v0.x >= lastPoint.x)
@@ -106,7 +104,7 @@ void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoin
         r1 = apex.midpoint(r2);
         l3 = r0 = l2.midpoint(r1);
         
-        evaluateBezierCurve(evaluatedPoints, l0, l1, l2, l3);
-        evaluateBezierCurve(evaluatedPoints, r0, r1, r2, r3);
+        evaluateBezierCurve(evaluatedPoints, l0, l1, l2, l3, depth + 1);
+        evaluateBezierCurve(evaluatedPoints, r0, r1, r2, r3, depth + 1);
     }
 }
