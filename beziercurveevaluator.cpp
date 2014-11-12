@@ -16,7 +16,7 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
     ptvEvaluatedCurvePts.clear();
     
 	const size_t controlPointCount = ptvCtrlPts.size();
-    cerr << "Control points (" << controlPointCount << "): " << endl;
+    cerr << "Evaluating Bezier from " << controlPointCount << " control points: " << endl;
     for (std::vector<Point>::const_iterator it = ptvCtrlPts.cbegin(); it != ptvCtrlPts.cend(); ++it)
     {
         cerr << "  (" << (*it).x << ", " << (*it).y << ")" << endl;
