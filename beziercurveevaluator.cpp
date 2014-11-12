@@ -1,6 +1,7 @@
 #include "beziercurveevaluator.h"
 #include <cassert>
 #include <iostream>
+#include <math.h>
 
 using namespace std;
 
@@ -20,24 +21,17 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
         cerr << "  (" << (*it).x << ", " << (*it).y << ")" << endl;
     }
     
-    const Point curveStartPoint = ptvCtrlPts[0];
-    if (curveStartPoint.x > 0.0)
-    {
-        // The Bezier doesn't start at time = 0, so let's just add a horizontal segment from time = 0 to the start point.
-        // This is C0 continuous, but it's not pretty; we could replace it with a separate bezier later.
-        ptvEvaluatedCurvePts.push_back(Point(0.0, curveStartPoint.y));
-    }
-    
     // Iterate over the control points, constructing bezier curves along the way.
-    // Keep going until we do not have enough points left to construct another curve.
-    int bezierStart = 0;
-    while (bezierStart + 4 <= controlPointCount)
+    size_t bezierStart = 0;
+    const size_t lastPointIndex = controlPointCount - 1;
+    while (bezierStart < controlPointCount)
     {
         // Evaluate the bezier curve formed by the current four control points.
+        // Reuse the last point in the list if necessary to provide four points.
         const Point v0 = ptvCtrlPts[bezierStart];
-        const Point v1 = ptvCtrlPts[bezierStart + 1];
-        const Point v2 = ptvCtrlPts[bezierStart + 2];
-        const Point v3 = ptvCtrlPts[bezierStart + 3];
+        const Point v1 = ptvCtrlPts[min(lastPointIndex, bezierStart + 1)];
+        const Point v2 = ptvCtrlPts[min(lastPointIndex, bezierStart + 2)];
+        const Point v3 = ptvCtrlPts[min(lastPointIndex, bezierStart + 3)];
         evaluateBezierCurve(ptvEvaluatedCurvePts, v0, v1, v2, v3);
         
         // Beziers require 4 points, but we want to reuse v3 from the previous curve as v0 for the next curve.
@@ -45,13 +39,38 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
         bezierStart += 3;
     }
     
-    const Point lastCurveEnd = ptvCtrlPts[bezierStart];
-    cerr << "Last curve end: " << bezierStart << " (" << lastCurveEnd.x << ", " << lastCurveEnd.y << ")" << endl;
-    if (lastCurveEnd.x < fAniLength)
+
+    // Find v0 for the first curve and v3 for the last bezier curve.
+    const Point firstV0 = ptvCtrlPts[0];
+    const Point lastV3 = ptvCtrlPts[controlPointCount - 1];
+
+    float wrapLineSlope;
+    float wrapYValue;
+    if (bWrap)
     {
-        // The Bezier doesn't start at time = END, so let's just add a horizontal segment from the end of the curve to t= END.
-        // This is C0 continuous, but it's not pretty; we could replace it with a separate bezier later.
-        ptvEvaluatedCurvePts.push_back(Point(fAniLength, lastCurveEnd.y));
+        // If wrapping is enabled then we want to fill in any gaps between t=0 and first v0 and last v3 and t=END with segments of the line that would connect
+        // last v3 to first v0 if the timeline wrapped from t=END to t=0.
+        // Compute the slope of that line, and the correct Y value for the wrapping point (i.e. both time=0 and time=END).
+        wrapLineSlope = (firstV0.y - lastV3.y) / (firstV0.x + (fAniLength - lastV3.x));
+        wrapYValue = firstV0.y - wrapLineSlope * firstV0.x;
+    }
+    
+    if (firstV0.x > 0.0)
+    {
+        // The first Bezier doesn't start at time=0, so let's fill in that space with something sensible.
+        // If wrapping is enabled, we'll connect first v0 to the Y value given by the wrapping line function.
+        // If not, we'll just reuse first v0's Y value.
+        ptvEvaluatedCurvePts.insert(ptvEvaluatedCurvePts.end(), Point(0.0, bWrap ? wrapYValue : firstV0.y));
+    }
+    
+    
+
+    if (lastV3.x < fAniLength)
+    {
+        // The last Bezier doesn't end at time=END, so let's fill in that space with something sensible.
+        // If wrapping is enabled, we'll connect last v3 to the Y value given by the wrapping line function.
+        // If not, we'll just reuse last v3's Y value.
+        ptvEvaluatedCurvePts.push_back(Point(fAniLength, bWrap ? wrapYValue : lastV3.y));
     }
 }
 
