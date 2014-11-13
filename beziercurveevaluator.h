@@ -11,10 +11,23 @@
 
 #include "curveevaluator.h"
 
+struct Bezier {
+    Point v0;
+    Point v1;
+    Point v2;
+    Point v3;
+};
+
 class BezierCurveEvaluator : public CurveEvaluator
 {
+protected:
+    virtual const char* getCurveName() const;
+    virtual Bezier getBezier(const std::vector<Point>& controlPoints, const size_t bezierIndex, bool& hasMore) const;
+
+private:
     bool isApproximatelyLinear(const Point& v0, const Point& v1, const Point& v2, const Point& v3) const;
     void evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3, const float maxX, const int depth) const;
+
 public:
 	void evaluateCurve(const std::vector<Point>& ptvCtrlPts, 
 		std::vector<Point>& ptvEvaluatedCurvePts, 

@@ -13,11 +13,15 @@
 
 class CatmullRomCurveEvaluator : public BezierCurveEvaluator
 {
-public:
+protected:
+    virtual const char* getCurveName() const;
+    virtual Bezier getBezier(const std::vector<Point>& controlPoints, const size_t bezierIndex, bool& hasMore) const;
+
+/*public:
 	void evaluateCurve(const std::vector<Point>& ptvCtrlPts, 
 		std::vector<Point>& ptvEvaluatedCurvePts, 
 		const float& fAniLength, 
-		const bool& bWrap) const;
+		const bool& bWrap) const;*/
 };
 
 #endif

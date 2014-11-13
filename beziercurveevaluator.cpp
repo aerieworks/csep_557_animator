@@ -16,7 +16,7 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
     ptvEvaluatedCurvePts.clear();
     
 	const size_t controlPointCount = ptvCtrlPts.size();
-    cerr << "Evaluating Bezier from " << controlPointCount << " control points: " << endl;
+    cerr << "Evaluating " << getCurveName() << " from " << controlPointCount << " control points: " << endl;
     for (std::vector<Point>::const_iterator it = ptvCtrlPts.cbegin(); it != ptvCtrlPts.cend(); ++it)
     {
         cerr << "  (" << (*it).x << ", " << (*it).y << ")" << endl;
@@ -43,25 +43,26 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
         // If wrapping is enabled, we'll connect first v0 to the Y value given by the wrapping line function.
         // If not, we'll just reuse first v0's Y value.
         ptvEvaluatedCurvePts.push_back(Point(0.0, bWrap ? wrapYValue : firstV0.y));
+        cerr << "Generated point to extend curve to full animation length." << endl;
     }
 
-    // Iterate over the control points, constructing bezier curves along the way.
-    size_t bezierStart = 0;
-    const size_t lastPointIndex = controlPointCount - 1;
-    while (bezierStart < controlPointCount)
+    bool hasMore;
+    size_t bezierIndex = 0;
+    size_t pointCount = ptvEvaluatedCurvePts.size();
+    do
     {
-        // Evaluate the bezier curve formed by the current four control points.
-        // Reuse the last point in the list if necessary to provide four points.
-        const Point v0 = ptvCtrlPts[bezierStart];
-        const Point v1 = ptvCtrlPts[min(lastPointIndex, bezierStart + 1)];
-        const Point v2 = ptvCtrlPts[min(lastPointIndex, bezierStart + 2)];
-        const Point v3 = ptvCtrlPts[min(lastPointIndex, bezierStart + 3)];
-        evaluateBezierCurve(ptvEvaluatedCurvePts, v0, v1, v2, v3, v3.x, 0);
-        
-        // Beziers require 4 points, but we want to reuse v3 from the previous curve as v0 for the next curve.
-        // This ensures C0 continuity.
-        bezierStart += 3;
-    }
+        // Get the next Bezier curve from the control points.
+        Bezier curve = getBezier(ptvCtrlPts, bezierIndex, hasMore);
+        cerr << "Curve " << bezierIndex << ": " << endl
+            << "  (" << curve.v0.x << ", " << curve.v0.y << "), "
+            << "(" << curve.v1.x << ", " << curve.v1.y << "), "
+            << "(" << curve.v2.x << ", " << curve.v2.y << "), "
+            << "(" << curve.v3.x << ", " << curve.v3.y << ")" << endl;
+        evaluateBezierCurve(ptvEvaluatedCurvePts, curve.v0, curve.v1, curve.v2, curve.v3, curve.v3.x, 0);
+        cerr << "  Generated " << (ptvEvaluatedCurvePts.size() - pointCount) << " points." << endl;
+        pointCount += ptvEvaluatedCurvePts.size();
+        bezierIndex += 1;
+    } while (hasMore);
     
     if (lastV3.x < fAniLength)
     {
@@ -69,9 +70,10 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
         // If wrapping is enabled, we'll connect last v3 to the Y value given by the wrapping line function.
         // If not, we'll just reuse last v3's Y value.
         ptvEvaluatedCurvePts.push_back(Point(fAniLength, bWrap ? wrapYValue : lastV3.y));
+        cerr << "Generated point to extend curve to full animation length." << endl;
     }
     
-    cerr << "Produced " << ptvEvaluatedCurvePts.size() << " points." << endl;
+    cerr << "Generated " << ptvEvaluatedCurvePts.size() << " points total." << endl;
 }
 
 bool BezierCurveEvaluator::isApproximatelyLinear(const Point& v0, const Point& v1, const Point& v2, const Point& v3) const
@@ -116,4 +118,32 @@ void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoin
         evaluateBezierCurve(evaluatedPoints, l0, l1, l2, l3, maxX, depth + 1);
         evaluateBezierCurve(evaluatedPoints, r0, r1, r2, r3, maxX, depth + 1);
     }
+}
+
+const char* BezierCurveEvaluator::getCurveName() const
+{
+    return "Bezier";
+}
+
+Bezier BezierCurveEvaluator::getBezier(const std::vector<Point>& controlPoints, const size_t index, bool& hasMore) const
+{
+    /*
+     Bezier curves have four control points.  We want to reuse v3 from the previous curve as v0 of the next curve.
+     We also fill out the last curve by reusing the last control point if necessary.
+     Given 8 control points [p0, ... , p7], we want:
+     - Curve 1: [p0, p1, p2, p3]
+     - Curve 2: [p3, p4, p5, p6]
+     - Curve 3: [p6, p7, p7, p7]
+     */
+    const size_t start = index * 3;
+    const size_t lastIndex = controlPoints.size() - 1;
+    
+    Bezier curve;
+    curve.v0 = controlPoints[start];
+    curve.v1 = controlPoints[min(lastIndex, start + 1)];
+    curve.v2 = controlPoints[min(lastIndex, start + 2)];
+    curve.v3 = controlPoints[min(lastIndex, start + 3)];
+    
+    hasMore = (start < lastIndex);
+    return curve;
 }
