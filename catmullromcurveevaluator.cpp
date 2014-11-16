@@ -12,7 +12,7 @@ Bezier CatmullRomCurveEvaluator::getBezier(const std::vector<Point>& controlPoin
     const Point p0 = (index == 0 ? controlPoints[0] : controlPoints[index - 1]);
     const Point p1 = controlPoints[index];
     const Point p2 = controlPoints[index + 1];
-    const Point p3 = controlPoints[min(lastIndex, index + 2)];
+    const Point p3 = controlPoints[fmin(lastIndex, index + 2)];
     
     Bezier curve;
     curve.v0 = p1;

@@ -28,7 +28,8 @@
 #include "linearcurveevaluator.h"
 #include "beziercurveevaluator.h"
 #include "catmullromcurveevaluator.h"
- 
+#include "bsplinecurveevaluator.h"
+
 
 #define LEFT		1
 #define MIDDLE		2
@@ -119,7 +120,7 @@ m_flcCurrCurve(FL_BLACK)
 	m_ppceCurveEvaluators[CURVE_TYPE_LINEAR] = new LinearCurveEvaluator();
 
 	// TODO: replace these linear evaluators
-	m_ppceCurveEvaluators[CURVE_TYPE_BSPLINE] = new LinearCurveEvaluator();
+	m_ppceCurveEvaluators[CURVE_TYPE_BSPLINE] = new BSplineCurveEvaluator();
 	m_ppceCurveEvaluators[CURVE_TYPE_BEZIER] = new BezierCurveEvaluator();
 	m_ppceCurveEvaluators[CURVE_TYPE_CATMULLROM] = new CatmullRomCurveEvaluator();
 	// Note that C2-Interpolating curve is not a requirement

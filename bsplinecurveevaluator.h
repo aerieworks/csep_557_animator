@@ -1,5 +1,5 @@
-#ifndef INCLUDED_CATMULL_ROM_CURVE_EVALUATOR_H
-#define INCLUDED_CATMULL_ROM_CURVE_EVALUATOR_H
+#ifndef INCLUDED_B_SPLINE_CURVE_EVALUATOR_H
+#define INCLUDED_B_SPLINE_CURVE_EVALUATOR_H
 
 #pragma warning(disable : 4786)  
 #pragma warning(disable : 4018)
@@ -11,7 +11,7 @@
 
 #include "beziercurveevaluator.h"
 
-class CatmullRomCurveEvaluator : public BezierCurveEvaluator
+class BSplineCurveEvaluator : public BezierCurveEvaluator
 {
 protected:
     virtual const char* getCurveName() const;
