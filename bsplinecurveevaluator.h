@@ -15,7 +15,9 @@ class BSplineCurveEvaluator : public BezierCurveEvaluator
 {
 protected:
     virtual const char* getCurveName() const;
-    virtual Bezier getBezier(const std::vector<Point>& controlPoints, const size_t bezierIndex, bool& hasMore) const;
+    virtual unsigned int getControlPointStep() const;
+    virtual Bezier getBezier(const Point& p0, const Point& p1, const Point& p2, const Point& p3) const;
+    virtual const std::vector<Point> fillOutControlPoints(const std::vector<Point>& realControlPoints, const float xMax, const bool wrap) const;
 };
 
 #endif

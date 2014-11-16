@@ -22,11 +22,13 @@ class BezierCurveEvaluator : public CurveEvaluator
 {
 protected:
     virtual const char* getCurveName() const;
-    virtual Bezier getBezier(const std::vector<Point>& controlPoints, const size_t bezierIndex, bool& hasMore) const;
-
+    virtual unsigned int getControlPointStep() const;
+    virtual Bezier getBezier(const Point& p0, const Point& p1, const Point& p2, const Point& p3) const;
+    virtual const std::vector<Point> fillOutControlPoints(const std::vector<Point>& realControlPoints, const float xMax, const bool wrap) const;
+    
 private:
     bool isApproximatelyLinear(const Point& v0, const Point& v1, const Point& v2, const Point& v3) const;
-    void evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3, const float maxX, const int depth) const;
+    void evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3, const float nextKnownX, const float xMax, const int depth) const;
 
 public:
 	void evaluateCurve(const std::vector<Point>& ptvCtrlPts, 

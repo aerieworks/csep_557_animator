@@ -15,65 +15,66 @@ void BezierCurveEvaluator::evaluateCurve(const std::vector<Point>& ptvCtrlPts,
 {
     ptvEvaluatedCurvePts.clear();
     
-	const size_t controlPointCount = ptvCtrlPts.size();
-    cerr << "Evaluating " << getCurveName() << " from " << controlPointCount << " control points: " << endl;
+    cerr << "Evaluating " << getCurveName() << " from " << ptvCtrlPts.size() << " control points: " << endl;
     for (std::vector<Point>::const_iterator it = ptvCtrlPts.cbegin(); it != ptvCtrlPts.cend(); ++it)
     {
         cerr << "  (" << (*it).x << ", " << (*it).y << ")" << endl;
     }
 
-    // Find v0 for the first curve and v3 for the last bezier curve.
-    const Point firstV0 = ptvCtrlPts[0];
-    const Point lastV3 = ptvCtrlPts[controlPointCount - 1];
-    
-    float wrapLineSlope;
-    float wrapYValue;
-    if (bWrap)
+    const std::vector<Point> controlPoints = fillOutControlPoints(ptvCtrlPts, fAniLength, bWrap);
+    cerr << "Filled out control points (" << controlPoints.size() << "):" << endl;
+    for (std::vector<Point>::const_iterator it = controlPoints.cbegin(); it != controlPoints.cend(); ++it)
     {
-        // If wrapping is enabled then we want to fill in any gaps between t=0 and first v0 and last v3 and t=END with segments of the line that would connect
-        // last v3 to first v0 if the timeline wrapped from t=END to t=0.
-        // Compute the slope of that line, and the correct Y value for the wrapping point (i.e. both time=0 and time=END).
-        wrapLineSlope = (firstV0.y - lastV3.y) / (firstV0.x + (fAniLength - lastV3.x));
-        wrapYValue = firstV0.y - wrapLineSlope * firstV0.x;
+        cerr << "  (" << (*it).x << ", " << (*it).y << ")" << endl;
     }
     
-    if (firstV0.x > 0.0)
+    const unsigned int pointStep = getControlPointStep();
+    const size_t controlPointCount = controlPoints.size();
+    size_t previousPointCount = 0;
+    size_t pointIndex = 0;
+    size_t curveCount = 0;
+    while (pointIndex + 3 < controlPointCount)
     {
-        // The first Bezier doesn't start at time=0, so let's fill in that space with something sensible.
-        // If wrapping is enabled, we'll connect first v0 to the Y value given by the wrapping line function.
-        // If not, we'll just reuse first v0's Y value.
-        ptvEvaluatedCurvePts.push_back(Point(0.0, bWrap ? wrapYValue : firstV0.y));
-        cerr << "Generated point to extend curve to full animation length." << endl;
-    }
-
-    bool hasMore;
-    size_t bezierIndex = 0;
-    size_t pointCount = ptvEvaluatedCurvePts.size();
-    do
-    {
-        // Get the next Bezier curve from the control points.
-        Bezier curve = getBezier(ptvCtrlPts, bezierIndex, hasMore);
-        cerr << "Curve " << bezierIndex << ": " << endl
-            << "  (" << curve.v0.x << ", " << curve.v0.y << "), "
+        curveCount += 1;
+        cerr << "Curve " << curveCount << ":" << endl;
+        
+        // Get the next Bezier curve points from the control points.
+        const Point& p0 = controlPoints[pointIndex];
+        const Point& p1 = controlPoints[pointIndex + 1];
+        const Point& p2 = controlPoints[pointIndex + 2];
+        const Point& p3 = controlPoints[pointIndex + 3];
+        cerr << "  Control points: "
+            << "(" << p0.x << ", " << p0.y << "), "
+            << "(" << p1.x << ", " << p1.y << "), "
+            << "(" << p2.x << ", " << p2.y << "), "
+            << "(" << p3.x << ", " << p3.y << ")" << endl;
+        
+        Bezier curve = getBezier(p0, p1, p2, p3);
+        cerr << "  Bezier points: "
+            << "(" << curve.v0.x << ", " << curve.v0.y << "), "
             << "(" << curve.v1.x << ", " << curve.v1.y << "), "
             << "(" << curve.v2.x << ", " << curve.v2.y << "), "
             << "(" << curve.v3.x << ", " << curve.v3.y << ")" << endl;
-        evaluateBezierCurve(ptvEvaluatedCurvePts, curve.v0, curve.v1, curve.v2, curve.v3, curve.v3.x, 0);
-        cerr << "  Generated " << (ptvEvaluatedCurvePts.size() - pointCount) << " points." << endl;
-        pointCount += ptvEvaluatedCurvePts.size();
-        bezierIndex += 1;
-    } while (hasMore);
-    
-    if (lastV3.x < fAniLength)
-    {
-        // The last Bezier doesn't end at time=END, so let's fill in that space with something sensible.
-        // If wrapping is enabled, we'll connect last v3 to the Y value given by the wrapping line function.
-        // If not, we'll just reuse last v3's Y value.
-        ptvEvaluatedCurvePts.push_back(Point(fAniLength, bWrap ? wrapYValue : lastV3.y));
-        cerr << "Generated point to extend curve to full animation length." << endl;
+        
+        evaluateBezierCurve(ptvEvaluatedCurvePts, curve.v0, curve.v1, curve.v2, curve.v3, curve.v3.x, fAniLength, 0);
+        cerr << "  Generated " << (ptvEvaluatedCurvePts.size() - previousPointCount) << " points." << endl;
+        previousPointCount = ptvEvaluatedCurvePts.size();
+        pointIndex += pointStep;
     }
     
-    cerr << "Generated " << ptvEvaluatedCurvePts.size() << " points total." << endl;
+    const size_t pointCount = ptvEvaluatedCurvePts.size();
+    cerr << "Generated " << pointCount << " points total in " << curveCount << " curves." << endl;
+    cerr << "First points: ";
+    for (int i = 0; i < 3; i++)
+    {
+        cerr << " (" << ptvEvaluatedCurvePts[i].x << ", " << ptvEvaluatedCurvePts[i].y << ") ";
+    }
+    cerr << endl << "Last points: ";
+    for (int i = 1; i <= 3; i++)
+    {
+        cerr << " (" << ptvEvaluatedCurvePts[pointCount - i].x << ", " << ptvEvaluatedCurvePts[pointCount - i].y << ") ";
+    }
+    cerr << endl;
 }
 
 bool BezierCurveEvaluator::isApproximatelyLinear(const Point& v0, const Point& v1, const Point& v2, const Point& v3) const
@@ -83,7 +84,7 @@ bool BezierCurveEvaluator::isApproximatelyLinear(const Point& v0, const Point& v
     return (linearDistance == 0.0) || (actualDistance / linearDistance < 1.0 + BEZIER_LINEAR_EPSILON);
 }
 
-void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3, const float maxX, const int depth) const
+void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoints, const Point& v0, const Point& v1, const Point& v2, const Point& v3, const float nextKnownX, const float xMax, const int depth) const
 {
     if (depth >= MAX_EVALUATE_RECURSION_DEPTH || isApproximatelyLinear(v0, v1, v2, v3))
     {
@@ -95,13 +96,43 @@ void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoin
         // 2) The point DOES NOT come after "maxX" (which is the X for the last control point).
         //      - This ensures that we can always include the last control point on the line, ensuring interpolation.
         //      - Catmull-Rom gets really funky around edge cases if you don't handle this case in some way.
-        if (v0.x >= evaluatedPoints[evaluatedPoints.size() - 1].x && v0.x <= maxX)
+        const float m = (v3.y - v0.y) / (v3.x - v0.x);
+        const float b = v0.y - m * v0.x;
+        if ((evaluatedPoints.size() == 0 || v0.x >= evaluatedPoints[evaluatedPoints.size() - 1].x)
+            && v0.x <= nextKnownX && v0.x <= xMax)
         {
-            evaluatedPoints.push_back(Point(v0));
+            if (v0.x < 0)
+            {
+                if (v3.x > 0)
+                {
+                    // If this line segment would cross the Y axis, add the Y-axis intercept point instead of v0.
+                    // Solve y = mx + b for x = 0, given v0 and v3.
+                    evaluatedPoints.push_back(Point(0, b));
+                }
+            }
+            else
+            {
+                evaluatedPoints.push_back(Point(v0));
+            }
         }
-        if (v3.x >= evaluatedPoints[evaluatedPoints.size() - 1].x && v3.x <= maxX)
+        if ((evaluatedPoints.size() == 0 || v3.x >= evaluatedPoints[evaluatedPoints.size() - 1].x)
+            && v3.x >= 0 && v3.x <= nextKnownX)
         {
-            evaluatedPoints.push_back(Point(v3));
+            if (v3.x > xMax)
+            {
+                if (v0.x < xMax)
+                {
+                    // If this line segment would cross xMax, add the xMax intercept point instead of v3.
+                    // Solve y = mx + b for x = xMax, given v0 and v3.
+                    const float m = (v3.y - v0.y) / (v3.x - v0.x);
+                    const float b = v0.y - m * v0.x;
+                    evaluatedPoints.push_back(Point(xMax, m * xMax + b));
+                }
+            }
+            else
+            {
+                evaluatedPoints.push_back(Point(v3));
+            }
         }
     }
     else
@@ -115,8 +146,8 @@ void BezierCurveEvaluator::evaluateBezierCurve(std::vector<Point>& evaluatedPoin
         r1 = apex.midpoint(r2);
         l3 = r0 = l2.midpoint(r1);
         
-        evaluateBezierCurve(evaluatedPoints, l0, l1, l2, l3, maxX, depth + 1);
-        evaluateBezierCurve(evaluatedPoints, r0, r1, r2, r3, maxX, depth + 1);
+        evaluateBezierCurve(evaluatedPoints, l0, l1, l2, l3, nextKnownX, xMax, depth + 1);
+        evaluateBezierCurve(evaluatedPoints, r0, r1, r2, r3, nextKnownX, xMax, depth + 1);
     }
 }
 
@@ -125,25 +156,62 @@ const char* BezierCurveEvaluator::getCurveName() const
     return "Bezier";
 }
 
-Bezier BezierCurveEvaluator::getBezier(const std::vector<Point>& controlPoints, const size_t index, bool& hasMore) const
+unsigned int BezierCurveEvaluator::getControlPointStep() const
 {
-    /*
-     Bezier curves have four control points.  We want to reuse v3 from the previous curve as v0 of the next curve.
-     We also fill out the last curve by reusing the last control point if necessary.
-     Given 8 control points [p0, ... , p7], we want:
-     - Curve 1: [p0, p1, p2, p3]
-     - Curve 2: [p3, p4, p5, p6]
-     - Curve 3: [p6, p7, p7, p7]
-     */
-    const size_t start = index * 3;
-    const size_t lastIndex = controlPoints.size() - 1;
+    return 3;
+}
+
+const std::vector<Point> BezierCurveEvaluator::fillOutControlPoints(const std::vector<Point>& realControlPoints, const float xMax, const bool wrap) const
+{
+    const size_t realPointCount = realControlPoints.size();
     
+    std::vector<Point> points;
+    const Point& firstPoint = realControlPoints[0];
+    const Point& secondPoint = realControlPoints[1];
+    const Point& secondToLastPoint = realControlPoints[realPointCount - 2];
+    const Point& lastPoint = realControlPoints[realPointCount - 1];
+    if (wrap)
+    {
+        points.push_back(Point(lastPoint.x - xMax, lastPoint.y));
+        points.push_back(Point(lastPoint.x * 2.0 - secondToLastPoint.x - xMax, lastPoint.y * 2.0 - secondToLastPoint.y));
+        points.push_back(Point(firstPoint.x * 2.0 - secondPoint.x, firstPoint.y * 2.0 - secondPoint.y));
+    }
+    else
+    {
+        points.push_back(Point(0, firstPoint.y));
+        points.push_back(Point(1.0 / 3.0, firstPoint.y));
+        points.push_back(Point(firstPoint.x - (1.0 / 3.0), firstPoint.y));
+    }
+
+    points.insert(points.cend(), realControlPoints.cbegin(), realControlPoints.cend());
+    for (size_t i = (realPointCount - 1) % 3; i > 0 && i < 3; i++)
+    {
+        points.push_back(Point(lastPoint));
+    }
+
+    if (wrap)
+    {
+        points.push_back(Point(lastPoint.x * 2.0 - secondToLastPoint.x, lastPoint.y * 2.0 - secondToLastPoint.y));
+        points.push_back(Point(xMax + firstPoint.x * 2.0 - secondPoint.x, firstPoint.y * 2.0 - secondPoint.y));
+        points.push_back(Point(xMax + firstPoint.x, firstPoint.y));
+    }
+    else
+    {
+        points.push_back(Point(lastPoint.x + (1.0 / 3.0), lastPoint.y));
+        points.push_back(Point(xMax - (1.0 / 3.0), lastPoint.y));
+        points.push_back(Point(xMax, lastPoint.y));
+        
+    }
+    return points;
+}
+
+Bezier BezierCurveEvaluator::getBezier(const Point& p0, const Point& p1, const Point& p2, const Point& p3) const
+{
     Bezier curve;
-    curve.v0 = controlPoints[start];
-    curve.v1 = controlPoints[min(lastIndex, start + 1)];
-    curve.v2 = controlPoints[min(lastIndex, start + 2)];
-    curve.v3 = controlPoints[min(lastIndex, start + 3)];
+    curve.v0 = p0;
+    curve.v1 = p1;
+    curve.v2 = p2;
+    curve.v3 = p3;
     
-    hasMore = (start < lastIndex);
     return curve;
 }

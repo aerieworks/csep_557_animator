@@ -10,26 +10,60 @@ const char* BSplineCurveEvaluator::getCurveName() const
     return "B-Spline";
 }
 
-Bezier BSplineCurveEvaluator::getBezier(const std::vector<Point>& controlPoints, const size_t index, bool& hasMore) const
+unsigned int BSplineCurveEvaluator::getControlPointStep() const
 {
-    const size_t lastIndex = controlPoints.size() - 1;
-    const Point b0 = controlPoints[fmax(0ul, index - 2)];
-    const Point b1 = controlPoints[fmax(0ul, index - 1)];
-    const Point b2 = controlPoints[fmin(lastIndex, index)];
-    const Point b3 = controlPoints[fmin(lastIndex, index + 1)];
+    return 1;
+}
+
+const std::vector<Point> BSplineCurveEvaluator::fillOutControlPoints(const std::vector<Point>& realControlPoints, const float xMax, const bool wrap) const
+{
+    std::vector<Point> points;
+    const size_t controlPointCount = realControlPoints.size();
     
-    cerr << "  de Boor points: "
-        << "(" << b0.x << ", " << b0.y << "), "
-        << "(" << b1.x << ", " << b1.y << "), "
-        << "(" << b2.x << ", " << b2.y << "), "
-        << "(" << b3.x << ", " << b3.y << ")" << endl;
+    if (wrap)
+    {
+        for (size_t i = controlPointCount - 3; i < controlPointCount; i++)
+        {
+            const Point& point = realControlPoints[fmax(0, i)];
+            points.push_back(Point(point.x - xMax, point.y));
+        }
+    }
+    else
+    {
+        const Point firstPoint(0, realControlPoints[0].y);
+        points.push_back(firstPoint);
+        points.push_back(firstPoint);
+        points.push_back(firstPoint);
+    }
     
+    points.insert(points.cend(), realControlPoints.cbegin(), realControlPoints.cend());
+    
+    if (wrap)
+    {
+        for (size_t i = 0; i < 3; i++)
+        {
+            const Point& point = realControlPoints[fmin(i, controlPointCount - 1)];
+            points.push_back(Point(xMax + point.x, point.y));
+        }
+    }
+    else
+    {
+        const Point lastPoint(xMax, realControlPoints[controlPointCount - 1].y);
+        points.push_back(lastPoint);
+        points.push_back(lastPoint);
+        points.push_back(lastPoint);
+    }
+    
+    return points;
+}
+
+Bezier BSplineCurveEvaluator::getBezier(const Point& p0, const Point& p1, const Point& p2, const Point& p3) const
+{
     Bezier curve;
-    curve.v0 = (b0 + b2) * (1.0 / 6.0) + b1 * (2.0 / 3.0);
-    curve.v1 = (b1 * 2 + b2) / 3.0;
-    curve.v2 = (b1 + b2 * 2) / 3.0;
-    curve.v3 = (b1 + b3) * (1.0 / 6.0) + b2 * (2.0 / 3.0);
+    curve.v0 = (p0 + p2) * (1.0 / 6.0) + p1 * (2.0 / 3.0);
+    curve.v1 = (p1 * 2 + p2) / 3.0;
+    curve.v2 = (p1 + p2 * 2) / 3.0;
+    curve.v3 = (p1 + p3) * (1.0 / 6.0) + p2 * (2.0 / 3.0);
     
-    hasMore = (index < controlPoints.size());
     return curve;
 }
