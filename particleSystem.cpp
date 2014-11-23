@@ -1,7 +1,7 @@
 #pragma warning(disable : 4786)
 
 #include "particleSystem.h"
-
+#include "modelerdraw.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -12,6 +12,8 @@
 using namespace std;
 
 static float prevT;
+
+#define TIME_EPSILON (0.01)
 
 /***************
  * Constructors
@@ -42,12 +44,19 @@ ParticleSystem::~ParticleSystem()
  * Simulation fxns
  ******************/
 
+void ParticleSystem::spawnParticle(Vec3f position)
+{
+    particles.push_back(Particle(0.25, position));
+}
+
+void ParticleSystem::addForce(Force& force)
+{
+    forces.push_back(&force);
+}
+
 /** Start the simulation */
 void ParticleSystem::startSimulation(float t)
 {
-    
-	// TODO
-
 	// These values are used by the UI ...
 	// negative bake_end_time indicates that simulation
 	// is still progressing, and allows the
@@ -58,6 +67,13 @@ void ParticleSystem::startSimulation(float t)
 	simulate = true;
 	dirty = true;
 
+    printf("Starting simulation.\n");
+    while (prevT < t)
+    {
+        const float nextT = fmin(t, prevT + TIME_EPSILON);
+        computeForcesAndUpdateParticles(nextT);
+        drawParticles(nextT);
+    }
 }
 
 /** Stop the simulation */
@@ -65,7 +81,7 @@ void ParticleSystem::stopSimulation(float t)
 {
     
 	// TODO
-
+    printf("Stopping simulation.\n");
 	// These values are used by the UI
 	simulate = false;
 	dirty = true;
@@ -75,8 +91,9 @@ void ParticleSystem::stopSimulation(float t)
 /** Reset the simulation */
 void ParticleSystem::resetSimulation(float t)
 {
-    
-	// TODO
+    printf("Resetting simulation.\n");
+    lastEmissionTime = 0;
+    prevT = 0;
 
 	// These values are used by the UI
 	simulate = false;
@@ -87,9 +104,29 @@ void ParticleSystem::resetSimulation(float t)
 /** Compute forces and update particles **/
 void ParticleSystem::computeForcesAndUpdateParticles(float t)
 {
-
-	// TODO
-
+    const float deltaT = t - prevT;
+    if (deltaT < 0)
+    {
+        resetSimulation(t);
+    }
+    
+    for (PARTICLE_ITER particle = particles.begin(); particle != particles.end(); ++particle)
+    {
+        Vec3f deltaV;
+        for (FORCE_PTR_CITER force = forces.cbegin(); force != forces.cend(); ++force)
+        {
+            deltaV += (*force)->computeForce(*particle, t) * deltaT;
+        }
+        particle->position += particle->velocity * deltaT;
+        particle->velocity += deltaV;
+    }
+    
+    if (t - lastEmissionTime >= 1.0)
+    {
+        spawnParticle(Vec3f(0, 5.0, 0));
+        lastEmissionTime = t;
+    }
+    
 	// Debugging info
 	if( t - prevT > .04 )
 		printf("(!!) Dropped Frame %lf (!!)\n", t-prevT);
@@ -100,8 +137,19 @@ void ParticleSystem::computeForcesAndUpdateParticles(float t)
 /** Render particles */
 void ParticleSystem::drawParticles(float t)
 {
-
-	// TODO
+    if (!simulate)
+    {
+        return;
+    }
+    
+    for (PARTICLE_CITER p_iter = particles.cbegin(); p_iter != particles.cend(); ++p_iter)
+    {
+        glPushMatrix();
+        setDiffuseColor(0.43, 0.26, 0.09);
+        glTranslatef(p_iter->position[0], p_iter->position[1], p_iter->position[2]);
+        drawSphere(0.1);
+        glPopMatrix();
+    }
 }
 
 

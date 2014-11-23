@@ -23,12 +23,50 @@
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4305)
 
+#include <vector>
 #include "vec.h"
 
+class Particle {
+public:
+    Particle(const float mass, const Vec3f position) : mass(mass), position(position) {}
+    float mass;
+    Vec3f position;
+    Vec3f velocity;
+};
 
+typedef std::vector<Particle>::iterator PARTICLE_ITER;
+typedef std::vector<Particle>::const_iterator PARTICLE_CITER;
+
+class Force {
+public:
+    virtual Vec3f computeForce(const Particle& particle, const float time) const = 0;
+};
+
+typedef std::vector<Force*>::const_iterator FORCE_PTR_CITER;
+
+class ConstantForce : public Force {
+    const Vec3f acceleration;
+public:
+    ConstantForce(const Vec3f acceleration) : acceleration(acceleration) {}
+    Vec3f computeForce(const Particle& particle, const float time) const {
+        return acceleration;
+    }
+};
+
+class MassDependentForce : public Force {
+    const Vec3f acceleration;
+public:
+    MassDependentForce(const Vec3f acceleration) : acceleration(acceleration) {}
+    Vec3f computeForce(const Particle& particle, const float time) const {
+        return particle.mass * acceleration;
+    }
+};
 
 class ParticleSystem {
-
+    std::vector<Particle> particles;
+    std::vector<Force*> forces;
+    float lastEmissionTime;
+    
 public:
 
 
@@ -40,6 +78,9 @@ public:
 	/** Destructor **/
 	virtual ~ParticleSystem();
 
+    virtual void spawnParticle(Vec3f position);
+    virtual void addForce(Force& force);
+    
 	/** Simulation fxns **/
 	// This fxn should render all particles in the system,
 	// at current time t.

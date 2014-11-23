@@ -302,7 +302,13 @@ int main()
 	// You should create a ParticleSystem object ps here and then
 	// call ModelerApplication::Instance()->SetParticleSystem(ps)
 	// to hook it up to the animator interface.
-
+    
+    ConstantForce gravity(Vec3f(0, -9.81, 0));
+    MassDependentForce wind(Vec3f(-11.176, 0, 0));
+    ParticleSystem ps;
+    ps.addForce(gravity);
+    ps.addForce(wind);
+    ModelerApplication::Instance()->SetParticleSystem(&ps);
     ModelerApplication::Instance()->Init(&createRobotArm, controls, NUMCONTROLS);
 
     return ModelerApplication::Instance()->Run();
