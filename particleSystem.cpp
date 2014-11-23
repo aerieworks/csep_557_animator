@@ -15,6 +15,34 @@ static float prevT;
 
 #define TIME_EPSILON (0.01)
 
+void ParticleCollection::updateParticles(const float time, const float deltaT)
+{
+    // Default implementation assumes all forces in collection apply to all particles.
+    for (PARTICLE_ITER particle = particles.begin(); particle != particles.end(); ++particle)
+    {
+        Vec3f deltaV;
+        for (FORCE_PTR_CITER force = forces.cbegin(); force != forces.cend(); ++force)
+        {
+            deltaV += (*force)->computeForce(*particle, time) * deltaT;
+        }
+        particle->position += particle->velocity * deltaT;
+        particle->velocity += deltaV;
+    }
+}
+
+void ParticleCollection::drawParticles(const float time)
+{
+    // Default implementation renders all particles as simple brown spheres.
+    for (PARTICLE_CITER p_iter = particles.cbegin(); p_iter != particles.cend(); ++p_iter)
+    {
+        glPushMatrix();
+        setDiffuseColor(0.43, 0.26, 0.09);
+        glTranslatef(p_iter->position[0], p_iter->position[1], p_iter->position[2]);
+        drawSphere(0.1);
+        glPopMatrix();
+    }
+}
+
 /***************
  * Constructors
  ***************/
@@ -43,16 +71,6 @@ ParticleSystem::~ParticleSystem()
 /******************
  * Simulation fxns
  ******************/
-
-void ParticleSystem::spawnParticle(Vec3f position)
-{
-    particles.push_back(Particle(0.25, position));
-}
-
-void ParticleSystem::addForce(Force& force)
-{
-    forces.push_back(&force);
-}
 
 /** Start the simulation */
 void ParticleSystem::startSimulation(float t)
@@ -92,7 +110,6 @@ void ParticleSystem::stopSimulation(float t)
 void ParticleSystem::resetSimulation(float t)
 {
     printf("Resetting simulation.\n");
-    lastEmissionTime = 0;
     prevT = 0;
 
 	// These values are used by the UI
@@ -104,27 +121,16 @@ void ParticleSystem::resetSimulation(float t)
 /** Compute forces and update particles **/
 void ParticleSystem::computeForcesAndUpdateParticles(float t)
 {
-    const float deltaT = t - prevT;
-    if (deltaT < 0)
+    if (!simulate)
     {
-        resetSimulation(t);
+        return;
     }
     
-    for (PARTICLE_ITER particle = particles.begin(); particle != particles.end(); ++particle)
+    const float deltaT = t - prevT;    
+    for (PARTICLE_COLLECTION_PTR_ITER pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
     {
-        Vec3f deltaV;
-        for (FORCE_PTR_CITER force = forces.cbegin(); force != forces.cend(); ++force)
-        {
-            deltaV += (*force)->computeForce(*particle, t) * deltaT;
-        }
-        particle->position += particle->velocity * deltaT;
-        particle->velocity += deltaV;
-    }
-    
-    if (t - lastEmissionTime >= 0.1)
-    {
-        spawnParticle(Vec3f(0, 5.0, 0));
-        lastEmissionTime = t;
+        ParticleCollection* pc = *pc_iter;
+        pc->updateParticles(t, deltaT);
     }
     
 	// Debugging info
@@ -142,13 +148,9 @@ void ParticleSystem::drawParticles(float t)
         return;
     }
     
-    for (PARTICLE_CITER p_iter = particles.cbegin(); p_iter != particles.cend(); ++p_iter)
+    for (PARTICLE_COLLECTION_PTR_ITER pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
     {
-        glPushMatrix();
-        setDiffuseColor(0.43, 0.26, 0.09);
-        glTranslatef(p_iter->position[0], p_iter->position[1], p_iter->position[2]);
-        drawSphere(0.1);
-        glPopMatrix();
+        (*pc_iter)->drawParticles(t);
     }
 }
 

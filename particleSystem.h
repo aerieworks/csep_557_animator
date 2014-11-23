@@ -62,24 +62,50 @@ public:
     }
 };
 
-class ParticleSystem {
+class ParticleCollection {
+public:
     std::vector<Particle> particles;
     std::vector<Force*> forces;
+    
+    virtual void addForce(Force& force) { forces.push_back(&force); }
+    virtual void updateParticles(const float time, const float deltaT);
+    virtual void drawParticles(const float time);
+};
+
+typedef std::vector<ParticleCollection*>::iterator PARTICLE_COLLECTION_PTR_ITER;
+
+class ParticleEmitter : public ParticleCollection {
+    Vec3f position;
+    const float particleMass;
+    const float emissionRate;
     float lastEmissionTime;
+public:
+    ParticleEmitter(const float particleMass, const float emissionRate) : particleMass(particleMass), emissionRate(emissionRate), lastEmissionTime(0) {}
+    
+    void setPosition(const Vec3f position) { this->position = position; }
+    
+    virtual void updateParticles(const float time, const float deltaT) {
+        if (time - lastEmissionTime > (1.0 / emissionRate)) {
+            particles.push_back(Particle(particleMass, position));
+            lastEmissionTime = time;
+        }
+        
+        ParticleCollection::updateParticles(time, deltaT);
+    }
+};
+
+class ParticleSystem {
+    std::vector<ParticleCollection*> particleCollections;
     
 public:
-
-
-
 	/** Constructor **/
 	ParticleSystem();
 
 
 	/** Destructor **/
 	virtual ~ParticleSystem();
-
-    virtual void spawnParticle(Vec3f position);
-    virtual void addForce(Force& force);
+    
+    void addParticleCollection(ParticleCollection* pc) { particleCollections.push_back(pc); }
     
 	/** Simulation fxns **/
 	// This fxn should render all particles in the system,

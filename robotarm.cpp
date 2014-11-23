@@ -56,9 +56,25 @@ void y_box(float h);
 // To make a RobotArm, we inherit off of ModelerView
 class RobotArm : public ModelerView 
 {
+private:
+    ConstantForce gravity;
+    ConstantForce wind;
+    ViscousDrag airResistance;
+    ParticleEmitter dirtDumper;
 public:
     RobotArm(int x, int y, int w, int h, char *label) 
-        : ModelerView(x,y,w,h,label) {}
+        : ModelerView(x,y,w,h,label),
+          dirtDumper(0.25, 10),
+          gravity(Vec3f(0, -9.81, 0)),
+          wind(Vec3f(-11.176, 0, 0)),
+          airResistance(0.25)
+    {
+        dirtDumper.addForce(gravity);
+        dirtDumper.addForce(wind);
+        dirtDumper.addForce(airResistance);
+        dirtDumper.setPosition(Vec3f(0, 5.0, 0));
+        ModelerApplication::Instance()->GetParticleSystem()->addParticleCollection(&dirtDumper);
+    }
     virtual void draw();
 };
 
@@ -303,15 +319,7 @@ int main()
 	// call ModelerApplication::Instance()->SetParticleSystem(ps)
 	// to hook it up to the animator interface.
     
-    ConstantForce gravity(Vec3f(0, -9.81, 0));
-    ConstantForce wind(Vec3f(-11.176, 0, 0));
-    ViscousDrag airResistance(0.25);
-    
     ParticleSystem ps;
-    ps.addForce(gravity);
-    ps.addForce(wind);
-    ps.addForce(airResistance);
-    
     ModelerApplication::Instance()->SetParticleSystem(&ps);
     ModelerApplication::Instance()->Init(&createRobotArm, controls, NUMCONTROLS);
 
