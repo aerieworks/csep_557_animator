@@ -41,7 +41,7 @@ void ParticleCollection::updateParticles(const float time, const float deltaT)
 void ParticleCollection::drawParticles(const float time)
 {
     // Default implementation renders all particles as simple brown spheres.
-    for (PARTICLE_CITER p_iter = particles.cbegin(); p_iter != particles.cend(); ++p_iter)
+    for (auto p_iter = particles.cbegin(); p_iter != particles.cend(); ++p_iter)
     {
         glPushMatrix();
         setDiffuseColor(0.43, 0.26, 0.09);
@@ -149,7 +149,7 @@ void ParticleSystem::computeForcesAndUpdateParticles(float t)
     }
     
     const float deltaT = t - prevT;
-    for (PARTICLE_COLLECTION_PTR_ITER pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
+    for (auto pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
     {
         ParticleCollection* pc = *pc_iter;
         pc->updateParticles(t, deltaT);
@@ -170,7 +170,7 @@ void ParticleSystem::drawParticles(float t)
         return;
     }
     
-    for (PARTICLE_COLLECTION_PTR_ITER pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
+    for (auto pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
     {
         (*pc_iter)->drawParticles(t);
     }
