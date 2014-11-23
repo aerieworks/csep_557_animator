@@ -7,7 +7,6 @@
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
-//#include <limits>
 
 using namespace std;
 
@@ -18,15 +17,24 @@ static float prevT;
 void ParticleCollection::updateParticles(const float time, const float deltaT)
 {
     // Default implementation assumes all forces in collection apply to all particles.
-    for (PARTICLE_ITER particle = particles.begin(); particle != particles.end(); ++particle)
+    for (auto particle = particles.begin(); particle != particles.end(); )
     {
-        Vec3f deltaV;
-        for (FORCE_PTR_CITER force = forces.cbegin(); force != forces.cend(); ++force)
+        if (time - particle->getCreationTime() >= maxParticleAge)
         {
-            deltaV += (*force)->computeForce(*particle, time) * deltaT;
+            // Remove particles that have expired.
+            particles.erase(particle);
         }
-        particle->position += particle->velocity * deltaT;
-        particle->velocity += deltaV;
+        else
+        {
+            Vec3f deltaV;
+            for (auto force = forces.cbegin(); force != forces.cend(); ++force)
+            {
+                deltaV += (*force)->computeForce(*particle, time) * deltaT;
+            }
+            particle->position += particle->velocity * deltaT;
+            particle->velocity += deltaV;
+            ++particle;
+        }
     }
 }
 
@@ -38,16 +46,28 @@ void ParticleCollection::drawParticles(const float time)
         glPushMatrix();
         setDiffuseColor(0.43, 0.26, 0.09);
         glTranslatef(p_iter->position[0], p_iter->position[1], p_iter->position[2]);
-        drawSphere(0.1);
+        drawSphere(0.01);
         glPopMatrix();
     }
+}
+
+void ParticleEmitter::updateParticles(const float time, const float deltaT)
+{
+    if (time - lastEmissionTime > (1.0 / emissionRate)) {
+        Particle p(time, particleMass, position);
+        p.velocity = jitterVelocity();
+        particles.push_back(p);
+        lastEmissionTime = time;
+    }
+    
+    ParticleCollection::updateParticles(time, deltaT);
 }
 
 /***************
  * Constructors
  ***************/
 
-ParticleSystem::ParticleSystem() 
+ParticleSystem::ParticleSystem()
 {
 	// TODO
 
@@ -64,7 +84,6 @@ ParticleSystem::ParticleSystem()
 ParticleSystem::~ParticleSystem() 
 {
 	// TODO
-
 }
 
 
@@ -86,12 +105,15 @@ void ParticleSystem::startSimulation(float t)
 	dirty = true;
 
     printf("Starting simulation.\n");
+    int iterations = 0;
     while (prevT < t)
     {
+        iterations += 1;
         const float nextT = fmin(t, prevT + TIME_EPSILON);
         computeForcesAndUpdateParticles(nextT);
         drawParticles(nextT);
     }
+    printf("Computed %d iterationss.\n", iterations);
 }
 
 /** Stop the simulation */
@@ -126,7 +148,7 @@ void ParticleSystem::computeForcesAndUpdateParticles(float t)
         return;
     }
     
-    const float deltaT = t - prevT;    
+    const float deltaT = t - prevT;
     for (PARTICLE_COLLECTION_PTR_ITER pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
     {
         ParticleCollection* pc = *pc_iter;

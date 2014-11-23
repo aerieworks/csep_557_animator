@@ -12,6 +12,7 @@
 #include "modelerapp.h"
 #include "modelerdraw.h"
 #include "particleSystem.h"
+#include "mat.h"
 
 
 
@@ -61,18 +62,20 @@ private:
     ConstantForce wind;
     ViscousDrag airResistance;
     ParticleEmitter dirtDumper;
+    
+    Mat4f getModelViewMatrix() const;
+    void updateDirtDumper(const Mat4f cameraTransforms);
 public:
     RobotArm(int x, int y, int w, int h, char *label) 
         : ModelerView(x,y,w,h,label),
-          dirtDumper(0.25, 10),
+          dirtDumper(3.0, 0.25, 50, Vec3f(0.25, 0.25, 0.25)),
           gravity(Vec3f(0, -9.81, 0)),
-          wind(Vec3f(-11.176, 0, 0)),
+          wind(Vec3f(-3.0, 0, 0)),
           airResistance(0.25)
     {
         dirtDumper.addForce(gravity);
         dirtDumper.addForce(wind);
         dirtDumper.addForce(airResistance);
-        dirtDumper.setPosition(Vec3f(0, 5.0, 0));
         ModelerApplication::Instance()->GetParticleSystem()->addParticleCollection(&dirtDumper);
     }
     virtual void draw();
@@ -91,7 +94,12 @@ ModelerView* createRobotArm(int x, int y, int w, int h, char *label)
 
 
 
-
+Mat4f RobotArm::getModelViewMatrix() const
+{
+    Mat4f matrix;
+    glGetFloatv(GL_MODELVIEW_MATRIX, matrix.n);
+    return matrix.transpose();
+}
 
 // We are going to override (is that the right word?) the draw()
 // method of ModelerView to draw out RobotArm
@@ -107,14 +115,12 @@ void RobotArm::draw()
 	float h2 = VAL( LOWER_LENGTH );
 	float h3 = VAL( UPPER_LENGTH );
 
-
-
-    // This call takes care of a lot of the nasty projection 
+    // This call takes care of a lot of the nasty projection
     // matrix stuff
     ModelerView::draw();
 
-
-
+    // Save camera transforms.
+    const Mat4f cameraTransforms = getModelViewMatrix();
 
 	static GLfloat lmodel_ambient[] = {0.4,0.4,0.4,1.0};
 
@@ -142,8 +148,15 @@ void RobotArm::draw()
 	glRotatef( cr, 0.0, 0.0, 1.0 );
 	claw(1.0);
 
+    updateDirtDumper(cameraTransforms);
 
+}
 
+void RobotArm::updateDirtDumper(const Mat4f cameraTransforms)
+{
+    Mat4f modelTransforms = cameraTransforms.inverse() * getModelViewMatrix();
+    Vec3f clawWorldPoint = modelTransforms * Vec3f(0, 0, 0);
+    dirtDumper.setPosition(clawWorldPoint);
 }
 
 void ground(float h) 
@@ -318,10 +331,12 @@ int main()
 	// You should create a ParticleSystem object ps here and then
 	// call ModelerApplication::Instance()->SetParticleSystem(ps)
 	// to hook it up to the animator interface.
-    
+
     ParticleSystem ps;
     ModelerApplication::Instance()->SetParticleSystem(&ps);
     ModelerApplication::Instance()->Init(&createRobotArm, controls, NUMCONTROLS);
 
-    return ModelerApplication::Instance()->Run();
+    int result = ModelerApplication::Instance()->Run();
+    ModelerApplication::Instance()->SetParticleSystem(NULL);
+    return result;
 }

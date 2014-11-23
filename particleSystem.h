@@ -27,11 +27,17 @@
 #include "vec.h"
 
 class Particle {
+    float creationTime;
+    
 public:
-    Particle(const float mass, const Vec3f position) : mass(mass), position(position) {}
     float mass;
     Vec3f position;
     Vec3f velocity;
+
+    Particle(const Particle& p) : Particle(p.creationTime, p.mass, p.position) { velocity = p.velocity; }
+    Particle(const float creationTime, const float mass, const Vec3f position) : creationTime(creationTime), mass(mass), position(position) {}
+    
+    float getCreationTime() const { return creationTime; }
 };
 
 typedef std::vector<Particle>::iterator PARTICLE_ITER;
@@ -63,9 +69,12 @@ public:
 };
 
 class ParticleCollection {
+    const float maxParticleAge;
 public:
     std::vector<Particle> particles;
     std::vector<Force*> forces;
+    
+    ParticleCollection(const float maxParticleAge) : maxParticleAge(maxParticleAge) {}
     
     virtual void addForce(Force& force) { forces.push_back(&force); }
     virtual void updateParticles(const float time, const float deltaT);
@@ -78,20 +87,29 @@ class ParticleEmitter : public ParticleCollection {
     Vec3f position;
     const float particleMass;
     const float emissionRate;
+    const Vec3f jitter;
     float lastEmissionTime;
-public:
-    ParticleEmitter(const float particleMass, const float emissionRate) : particleMass(particleMass), emissionRate(emissionRate), lastEmissionTime(0) {}
     
-    void setPosition(const Vec3f position) { this->position = position; }
-    
-    virtual void updateParticles(const float time, const float deltaT) {
-        if (time - lastEmissionTime > (1.0 / emissionRate)) {
-            particles.push_back(Particle(particleMass, position));
-            lastEmissionTime = time;
+    Vec3f jitterVelocity() {
+        Vec3f velocity;
+        for (int i = 0; i < 3; i++) {
+            const float factor = (float)(rand() % 100) / 100.0;
+            velocity[i] = factor * jitter[i] - jitter[i] / 2.0;
         }
         
-        ParticleCollection::updateParticles(time, deltaT);
+        return velocity;
     }
+    
+public:
+    ParticleEmitter(const float maxParticleAge, const float particleMass, const float emissionRate, const Vec3f jitter) :
+        ParticleCollection(maxParticleAge),
+        particleMass(particleMass),
+        emissionRate(emissionRate),
+        lastEmissionTime(0),
+        jitter(jitter) {}
+    
+    void setPosition(const Vec3f position) { this->position = position; }
+    virtual void updateParticles(const float time, const float deltaT);
 };
 
 class ParticleSystem {
