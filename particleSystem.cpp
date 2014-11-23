@@ -121,7 +121,7 @@ void ParticleSystem::computeForcesAndUpdateParticles(float t)
         particle->velocity += deltaV;
     }
     
-    if (t - lastEmissionTime >= 1.0)
+    if (t - lastEmissionTime >= 0.1)
     {
         spawnParticle(Vec3f(0, 5.0, 0));
         lastEmissionTime = t;

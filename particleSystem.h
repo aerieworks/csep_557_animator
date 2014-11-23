@@ -49,16 +49,16 @@ class ConstantForce : public Force {
 public:
     ConstantForce(const Vec3f acceleration) : acceleration(acceleration) {}
     Vec3f computeForce(const Particle& particle, const float time) const {
-        return acceleration;
+        return particle.mass * acceleration;
     }
 };
 
-class MassDependentForce : public Force {
-    const Vec3f acceleration;
+class ViscousDrag : public Force {
+    const float dragCoefficient;
 public:
-    MassDependentForce(const Vec3f acceleration) : acceleration(acceleration) {}
+    ViscousDrag(const float dragCoefficient) : dragCoefficient(dragCoefficient) {}
     Vec3f computeForce(const Particle& particle, const float time) const {
-        return particle.mass * acceleration;
+        return particle.velocity * -dragCoefficient;
     }
 };
 

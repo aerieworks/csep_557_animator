@@ -304,10 +304,14 @@ int main()
 	// to hook it up to the animator interface.
     
     ConstantForce gravity(Vec3f(0, -9.81, 0));
-    MassDependentForce wind(Vec3f(-11.176, 0, 0));
+    ConstantForce wind(Vec3f(-11.176, 0, 0));
+    ViscousDrag airResistance(0.25);
+    
     ParticleSystem ps;
     ps.addForce(gravity);
     ps.addForce(wind);
+    ps.addForce(airResistance);
+    
     ModelerApplication::Instance()->SetParticleSystem(&ps);
     ModelerApplication::Instance()->Init(&createRobotArm, controls, NUMCONTROLS);
 
