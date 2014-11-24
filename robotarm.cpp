@@ -68,7 +68,7 @@ private:
 public:
     RobotArm(int x, int y, int w, int h, char *label) 
         : ModelerView(x,y,w,h,label),
-          dirtDumper(3.0, 0.25, 50, Vec3f(0.25, 0.25, 0.25)),
+          dirtDumper(6.0, 0.25, 1, Vec3f(0.25, 0.25, 0.25)),
           gravity(Vec3f(0, -9.81, 0)),
           wind(Vec3f(-3.0, 0, 0)),
           airResistance(0.25)
@@ -76,7 +76,9 @@ public:
         dirtDumper.addForce(gravity);
         dirtDumper.addForce(wind);
         dirtDumper.addForce(airResistance);
-        ModelerApplication::Instance()->GetParticleSystem()->addParticleCollection(&dirtDumper);
+        ParticleSystem* ps = ModelerApplication::Instance()->GetParticleSystem();
+        ps->addParticleCollection(&dirtDumper);
+        ps->addSurface(Surface(Vec3f(0, 1.0, 0), Vec3f(0, 0, 0)));
     }
     virtual void draw();
 };

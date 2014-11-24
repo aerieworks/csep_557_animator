@@ -28,9 +28,17 @@
 #include "particle.h"
 #include "vec.h"
 
+class Surface {
+public:
+    Surface(const Vec3f normal, const Vec3f point) : normal(normal), point(point) {}
+    const Vec3f normal;
+    const Vec3f point;
+};
 
 class ParticleCollection {
     const float maxParticleAge;
+    
+    virtual void updatePosition(const float deltaT, Particle& particle, const std::vector<Surface>& surfaces);
 public:
     std::vector<Particle> particles;
     std::vector<Force*> forces;
@@ -38,7 +46,7 @@ public:
     ParticleCollection(const float maxParticleAge) : maxParticleAge(maxParticleAge) {}
     
     virtual void addForce(Force& force) { forces.push_back(&force); }
-    virtual void updateParticles(const float time, const float deltaT);
+    virtual void updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces);
     virtual void drawParticles(const float time);
 };
 
@@ -68,11 +76,12 @@ public:
         jitter(jitter) {}
     
     void setPosition(const Vec3f position) { this->position = position; }
-    virtual void updateParticles(const float time, const float deltaT);
+    virtual void updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces);
 };
 
 class ParticleSystem {
     std::vector<ParticleCollection*> particleCollections;
+    std::vector<Surface> surfaces;
     
 public:
 	/** Constructor **/
@@ -83,6 +92,7 @@ public:
 	virtual ~ParticleSystem();
     
     void addParticleCollection(ParticleCollection* pc) { particleCollections.push_back(pc); }
+    void addSurface(Surface surface) { surfaces.push_back(surface); }
     
 	/** Simulation fxns **/
 	// This fxn should render all particles in the system,

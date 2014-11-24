@@ -7,14 +7,35 @@
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
+#include <iostream>
 
 using namespace std;
 
 static float prevT;
 
 #define TIME_EPSILON (0.01)
+#define COLLISION_EPSILON (0.01)
 
-void ParticleCollection::updateParticles(const float time, const float deltaT)
+void ParticleCollection::updatePosition(const float deltaT, Particle& particle, const std::vector<Surface>& surfaces)
+{
+    Vec3f newPos = particle.position + particle.velocity * deltaT;
+    for (auto surface = surfaces.cbegin(); surface != surfaces.cend(); ++surface)
+    {
+        if ((particle.position - surface->point) * surface->normal < COLLISION_EPSILON && particle.velocity * surface->normal <= 0)
+        {
+            Vec3f vNormal = (surface->normal * particle.velocity) * surface->normal;
+            Vec3f vTangent = particle.velocity - vNormal;
+            cerr << "Particle collided: " << particle.position << ", " << particle.velocity;
+            particle.velocity = vTangent - 0.4 * vNormal;
+            cerr << " => " << particle.velocity << endl;
+            return;
+        }
+    }
+
+    particle.position = newPos;
+}
+
+void ParticleCollection::updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces)
 {
     // Default implementation assumes all forces in collection apply to all particles.
     for (auto particle = particles.begin(); particle != particles.end(); )
@@ -31,7 +52,7 @@ void ParticleCollection::updateParticles(const float time, const float deltaT)
             {
                 deltaV += (*force)->computeForce(*particle, time) * deltaT;
             }
-            particle->position += particle->velocity * deltaT;
+            updatePosition(deltaT, *particle, surfaces);
             particle->velocity += deltaV;
             ++particle;
         }
@@ -46,12 +67,12 @@ void ParticleCollection::drawParticles(const float time)
         glPushMatrix();
         setDiffuseColor(0.43, 0.26, 0.09);
         glTranslatef(p_iter->position[0], p_iter->position[1], p_iter->position[2]);
-        drawSphere(0.01);
+        drawSphere(0.25);
         glPopMatrix();
     }
 }
 
-void ParticleEmitter::updateParticles(const float time, const float deltaT)
+void ParticleEmitter::updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces)
 {
     if (time - lastEmissionTime > (1.0 / emissionRate)) {
         Particle p(time, particleMass, position);
@@ -60,7 +81,7 @@ void ParticleEmitter::updateParticles(const float time, const float deltaT)
         lastEmissionTime = time;
     }
     
-    ParticleCollection::updateParticles(time, deltaT);
+    ParticleCollection::updateParticles(time, deltaT, surfaces);
 }
 
 /***************
@@ -152,7 +173,7 @@ void ParticleSystem::computeForcesAndUpdateParticles(float t)
     for (auto pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
     {
         ParticleCollection* pc = *pc_iter;
-        pc->updateParticles(t, deltaT);
+        pc->updateParticles(t, deltaT, surfaces);
     }
     
 	// Debugging info
