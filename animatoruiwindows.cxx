@@ -165,6 +165,17 @@ ModelerUIWindows::ModelerUIWindows() {
             o->labelsize(12);
             o->user_data((void*)(this));
           }
+          { Fl_Value_Slider* o = m_psldrRestitution = new Fl_Value_Slider(470, 555, 100, 20, "Res.");
+            o->type(5);
+            o->labelsize(12);
+            o->minimum(0.01);
+            o->maximum(1.0);
+            o->step(0.01);
+            o->value(0.4);
+            o->user_data((void*)(this));
+            o->align(FL_ALIGN_LEFT);
+            Fl_Group::current()->resizable(o);
+          }
           { Fl_Value_Slider* o = m_psldrFPS = new Fl_Value_Slider(470, 580, 100, 20, "FPS");
             o->type(5);
             o->labelsize(12);

@@ -86,6 +86,9 @@ public:
 	// Returns animating flag
 	bool Animating();
 
+    // Return the restitution constant for collisions.
+    float GetRestitutionConstant();
+    
 private:
 	// Private for singleton
 	ModelerApplication() : m_numControls(-1) { ps = 0; }

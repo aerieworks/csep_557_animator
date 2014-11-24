@@ -65,6 +65,7 @@ public:
   Fl_Button *m_pbtStepForw;
   Fl_Light_Button *m_pbtLoop;
   Fl_Light_Button *m_pbtSimulate;
+  Fl_Value_Slider *m_psldrRestitution;
   Fl_Value_Slider *m_psldrFPS;
   IndicatorWindow *m_pwndIndicatorWnd;
   Fl_Slider *m_psldrTimeSlider;

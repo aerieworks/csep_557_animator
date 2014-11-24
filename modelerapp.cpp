@@ -203,6 +203,11 @@ bool ModelerApplication::Animating()
 	return m_animating;
 }
 
+float ModelerApplication::GetRestitutionConstant()
+{
+    return m_ui->restitutionConstant();
+}
+
 void ModelerApplication::ValueChangedCallback()
 {
 

@@ -309,6 +309,11 @@ void ModelerUI::cb_fps(Fl_Slider* o, void* v)
 	((ModelerUI*)(o->user_data()))->cb_fps_i(o,v);
 }
 
+void ModelerUI::cb_restitutionConstant(Fl_Slider* o, void* v)
+{
+    ((ModelerUI*)(o->user_data()))->restitutionConstant(o->value());
+}
+
 void ModelerUI::cb_sliders(Fl_Widget* o, void* v)
 {
 	ModelerUI* pui = (ModelerUI*)o->user_data();
@@ -939,6 +944,16 @@ void ModelerUI::fps(const int iFps)
 	m_iFps = iFps;
 }
 
+float ModelerUI::restitutionConstant()
+{
+    return m_fRestitutionConstant;
+}
+
+void ModelerUI::restitutionConstant(float restitutionConstant)
+{
+    m_fRestitutionConstant = restitutionConstant;
+}
+
 ModelerUI::ModelerUI() : 
 m_iCurrControlCount(0), 
 m_pcbfValueChangedCallback(NULL),
@@ -981,7 +996,8 @@ m_nativeChooser(NULL)
 	m_pbtLoop->callback((Fl_Callback*)cb_loop);
 	m_pbtSimulate->callback((Fl_Callback*)cb_simulate);
 	m_psldrFPS->callback((Fl_Callback*)cb_fps);
-
+    m_psldrRestitution->callback((Fl_Callback*)cb_restitutionConstant);
+    
 	m_pwndMainWnd->callback((Fl_Callback*)cb_hide);
 	m_pwndMainWnd->when(FL_HIDE);
 

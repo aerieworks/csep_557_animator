@@ -30,7 +30,7 @@ void ParticleCollection::updatePosition(const float deltaT, Particle& particle)
             particle.position += collision.time * particle.velocity + particle.radius * collision.normal;
             Vec3f vNormal = (collision.normal * particle.velocity) * collision.normal;
             Vec3f vTangent = particle.velocity - vNormal;
-            particle.velocity = vTangent - 0.5 * vNormal;
+            particle.velocity = vTangent - ModelerApplication::Instance()->GetRestitutionConstant() * vNormal;
             remainingT -= collision.time;
             break;
         }
