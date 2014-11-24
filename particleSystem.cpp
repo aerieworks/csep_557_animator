@@ -1,7 +1,8 @@
 #pragma warning(disable : 4786)
 
-#include "particleSystem.h"
+#include "modelerapp.h"
 #include "modelerdraw.h"
+#include "particleSystem.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -14,26 +15,30 @@ using namespace std;
 static float prevT;
 
 #define TIME_EPSILON (0.01)
-#define COLLISION_EPSILON (0.01)
 
-void ParticleCollection::updatePosition(const float deltaT, Particle& particle, const std::vector<Surface>& surfaces)
+void ParticleCollection::updatePosition(const float deltaT, Particle& particle)
 {
-    Vec3f newPos = particle.position + particle.velocity * deltaT;
-    for (auto surface = surfaces.cbegin(); surface != surfaces.cend(); ++surface)
+    auto collidables = ModelerApplication::Instance()->GetCollidables();
+    
+    float remainingT = deltaT;
+    for (auto collidable = collidables.cbegin(); collidable != collidables.cend(); ++collidable)
     {
-        if ((particle.position - surface->point) * surface->normal < COLLISION_EPSILON && particle.velocity * surface->normal <= 0)
+        Collision collision;
+        if ((*collidable)->testCollision(particle, deltaT, collision))
         {
-            Vec3f vNormal = (surface->normal * particle.velocity) * surface->normal;
+            particle.position += collision.time * particle.velocity + particle.radius * collision.normal;
+            Vec3f vNormal = (collision.normal * particle.velocity) * collision.normal;
             Vec3f vTangent = particle.velocity - vNormal;
             particle.velocity = vTangent - 0.4 * vNormal;
-            return;
+            remainingT -= collision.time;
+            break;
         }
     }
 
-    particle.position = newPos;
+    particle.position += particle.velocity * remainingT;
 }
 
-void ParticleCollection::updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces)
+void ParticleCollection::updateParticles(const float time, const float deltaT)
 {
     // Default implementation assumes all forces in collection apply to all particles.
     for (auto particle = particles.begin(); particle != particles.end(); )
@@ -48,9 +53,9 @@ void ParticleCollection::updateParticles(const float time, const float deltaT, c
             Vec3f deltaV;
             for (auto force = forces.cbegin(); force != forces.cend(); ++force)
             {
-                deltaV += (*force)->computeForce(*particle, time) * deltaT;
+                deltaV += (*force)->computeForce(*particle, time) / particle->mass * deltaT;
             }
-            updatePosition(deltaT, *particle, surfaces);
+            updatePosition(deltaT, *particle);
             particle->velocity += deltaV;
             ++particle;
         }
@@ -70,7 +75,7 @@ void ParticleCollection::drawParticles(const float time)
     }
 }
 
-void ParticleEmitter::updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces)
+void ParticleEmitter::updateParticles(const float time, const float deltaT)
 {
     if (time - lastEmissionTime > (1.0 / emissionRate)) {
         Particle p(time, particleMass, position, particleRadius, particleColor);
@@ -79,7 +84,7 @@ void ParticleEmitter::updateParticles(const float time, const float deltaT, cons
         lastEmissionTime = time;
     }
     
-    ParticleCollection::updateParticles(time, deltaT, surfaces);
+    ParticleCollection::updateParticles(time, deltaT);
 }
 
 /***************
@@ -171,7 +176,7 @@ void ParticleSystem::computeForcesAndUpdateParticles(float t)
     for (auto pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
     {
         ParticleCollection* pc = *pc_iter;
-        pc->updateParticles(t, deltaT, surfaces);
+        pc->updateParticles(t, deltaT);
     }
     
 	// Debugging info

@@ -82,7 +82,6 @@ public:
         dirtDumper.addForce(airResistance);
         ParticleSystem* ps = ModelerApplication::Instance()->GetParticleSystem();
         ps->addParticleCollection(&dirtDumper);
-        ps->addSurface(Surface(Vec3f(0, 1.0, 0), Vec3f(0, 0, 0)));
     }
     virtual void draw();
 };
@@ -128,6 +127,8 @@ void RobotArm::draw()
     // Save camera transforms.
     const Mat4f cameraTransforms = getModelViewMatrix();
 
+    ModelerApplication::Instance()->ResetCollidables();
+    
 	static GLfloat lmodel_ambient[] = {0.4,0.4,0.4,1.0};
 
 	// define the model
@@ -172,6 +173,7 @@ void ground(float h)
 	glPushMatrix();
 	glScalef(30,0,30);
 	y_box(h);
+    ModelerApplication::Instance()->AddCollidable(new QuadSurface(Vec3f(7.5, 0, 7.5), Vec3f(7.5, 0, -7.5), Vec3f(-7.5, 0, -7.5), Vec3f(-7.5, 0, 7.5)));
 	glPopMatrix();
 	glEnable(GL_LIGHTING);
 }

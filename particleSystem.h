@@ -26,19 +26,13 @@
 #include <vector>
 #include "force.h"
 #include "particle.h"
+#include "collidable.h"
 #include "vec.h"
-
-class Surface {
-public:
-    Surface(const Vec3f normal, const Vec3f point) : normal(normal), point(point) {}
-    const Vec3f normal;
-    const Vec3f point;
-};
 
 class ParticleCollection {
     float maxParticleAge;
     
-    virtual void updatePosition(const float deltaT, Particle& particle, const std::vector<Surface>& surfaces);
+    virtual void updatePosition(const float deltaT, Particle& particle);
 public:
     std::vector<Particle> particles;
     std::vector<Force*> forces;
@@ -47,7 +41,7 @@ public:
     
     virtual void addParticle(Particle particle) { particles.push_back(particle); }
     virtual void addForce(Force& force) { forces.push_back(&force); }
-    virtual void updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces);
+    virtual void updateParticles(const float time, const float deltaT);
     virtual void drawParticles(const float time);
     
     void setMaxParticleAge(const float maxParticleAge) { this->maxParticleAge = maxParticleAge; }
@@ -79,7 +73,7 @@ public:
         particleRadius(particleRadius),
         particleColor(particleColor) {}
     
-    virtual void updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces);
+    virtual void updateParticles(const float time, const float deltaT);
 
     void setPosition(const Vec3f position) { this->position = position; }
     void setEmissionRate(const float emissionRate) { this->emissionRate = emissionRate; }
@@ -88,7 +82,6 @@ public:
 
 class ParticleSystem {
     std::vector<ParticleCollection*> particleCollections;
-    std::vector<Surface> surfaces;
     
 public:
 	/** Constructor **/
@@ -99,7 +92,6 @@ public:
 	virtual ~ParticleSystem();
     
     void addParticleCollection(ParticleCollection* pc) { particleCollections.push_back(pc); }
-    void addSurface(Surface surface) { surfaces.push_back(surface); }
     
 	/** Simulation fxns **/
 	// This fxn should render all particles in the system,

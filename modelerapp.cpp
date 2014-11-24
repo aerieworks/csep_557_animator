@@ -117,6 +117,7 @@ ModelerApplication::~ModelerApplication()
 {
     // FLTK handles widget deletion
     delete m_ui;
+    ResetCollidables();
 }
 
 int ModelerApplication::Run()
@@ -156,6 +157,25 @@ ParticleSystem *ModelerApplication::GetParticleSystem()
 void ModelerApplication::SetParticleSystem(ParticleSystem *s)
 {
 	ps = s;
+}
+
+const std::vector<Collidable*> ModelerApplication::GetCollidables() const
+{
+    return collidables;
+}
+
+void ModelerApplication::AddCollidable(Collidable* collidable)
+{
+    collidables.push_back(collidable);
+}
+
+void ModelerApplication::ResetCollidables()
+{
+    for (auto c_ptr = collidables.begin(); c_ptr != collidables.end(); ++c_ptr)
+    {
+        delete *c_ptr;
+    }
+    collidables.clear();
 }
 
 float ModelerApplication::GetTime()

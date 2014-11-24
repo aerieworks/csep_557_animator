@@ -12,6 +12,9 @@
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4305)
 
+#include <vector>
+
+#include "collidable.h"
 #include "modelerview.h"
 
 struct ModelerControl
@@ -66,6 +69,11 @@ public:
 	ParticleSystem *GetParticleSystem();
 	void SetParticleSystem(ParticleSystem *s);
 
+    // Manage collidable objects.
+    const std::vector<Collidable*> GetCollidables() const;
+    void AddCollidable(Collidable *collidable);
+    void ResetCollidables();
+    
 	// Return the current time
 	float GetTime();
 
@@ -95,6 +103,9 @@ private:
 
 	// Particle System variables
 	ParticleSystem *ps;
+    
+    // Collidable object variables
+    std::vector<Collidable*> collidables;
 };
 
 #endif
