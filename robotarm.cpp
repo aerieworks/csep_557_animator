@@ -68,11 +68,15 @@ private:
 public:
     RobotArm(int x, int y, int w, int h, char *label) 
         : ModelerView(x,y,w,h,label),
-          dirtDumper(6.0, 0.25, 1, Vec3f(0.25, 0.25, 0.25)),
+          dirtDumper(0.25, 0.25, Vec3f(0.43, 0.26, 0.09)),
           gravity(Vec3f(0, -9.81, 0)),
           wind(Vec3f(-3.0, 0, 0)),
           airResistance(0.25)
     {
+        dirtDumper.setEmissionRate(1);
+        dirtDumper.setJitter(Vec3f(0.25, 0.25, 0.25));
+        dirtDumper.setMaxParticleAge(6.0);
+        
         dirtDumper.addForce(gravity);
         dirtDumper.addForce(wind);
         dirtDumper.addForce(airResistance);

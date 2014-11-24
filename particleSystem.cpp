@@ -25,9 +25,7 @@ void ParticleCollection::updatePosition(const float deltaT, Particle& particle, 
         {
             Vec3f vNormal = (surface->normal * particle.velocity) * surface->normal;
             Vec3f vTangent = particle.velocity - vNormal;
-            cerr << "Particle collided: " << particle.position << ", " << particle.velocity;
             particle.velocity = vTangent - 0.4 * vNormal;
-            cerr << " => " << particle.velocity << endl;
             return;
         }
     }
@@ -65,9 +63,9 @@ void ParticleCollection::drawParticles(const float time)
     for (auto p_iter = particles.cbegin(); p_iter != particles.cend(); ++p_iter)
     {
         glPushMatrix();
-        setDiffuseColor(0.43, 0.26, 0.09);
+        setDiffuseColor(p_iter->color[0], p_iter->color[1], p_iter->color[2]);
         glTranslatef(p_iter->position[0], p_iter->position[1], p_iter->position[2]);
-        drawSphere(0.25);
+        drawSphere(p_iter->radius);
         glPopMatrix();
     }
 }
@@ -75,7 +73,7 @@ void ParticleCollection::drawParticles(const float time)
 void ParticleEmitter::updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces)
 {
     if (time - lastEmissionTime > (1.0 / emissionRate)) {
-        Particle p(time, particleMass, position);
+        Particle p(time, particleMass, position, particleRadius, particleColor);
         p.velocity = jitterVelocity();
         particles.push_back(p);
         lastEmissionTime = time;

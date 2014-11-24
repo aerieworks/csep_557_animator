@@ -36,25 +36,30 @@ public:
 };
 
 class ParticleCollection {
-    const float maxParticleAge;
+    float maxParticleAge;
     
     virtual void updatePosition(const float deltaT, Particle& particle, const std::vector<Surface>& surfaces);
 public:
     std::vector<Particle> particles;
     std::vector<Force*> forces;
     
-    ParticleCollection(const float maxParticleAge) : maxParticleAge(maxParticleAge) {}
+    ParticleCollection() : maxParticleAge(-1) {}
     
+    virtual void addParticle(Particle particle) { particles.push_back(particle); }
     virtual void addForce(Force& force) { forces.push_back(&force); }
     virtual void updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces);
     virtual void drawParticles(const float time);
+    
+    void setMaxParticleAge(const float maxParticleAge) { this->maxParticleAge = maxParticleAge; }
 };
 
 class ParticleEmitter : public ParticleCollection {
     Vec3f position;
-    const float particleMass;
-    const float emissionRate;
-    const Vec3f jitter;
+    float particleMass;
+    float particleRadius;
+    Vec3f particleColor;
+    float emissionRate;
+    Vec3f jitter;
     float lastEmissionTime;
     
     Vec3f jitterVelocity() {
@@ -68,15 +73,17 @@ class ParticleEmitter : public ParticleCollection {
     }
     
 public:
-    ParticleEmitter(const float maxParticleAge, const float particleMass, const float emissionRate, const Vec3f jitter) :
-        ParticleCollection(maxParticleAge),
+    ParticleEmitter(const float particleMass, const float particleRadius, const Vec3f particleColor) :
+        ParticleCollection(),
         particleMass(particleMass),
-        emissionRate(emissionRate),
-        lastEmissionTime(0),
-        jitter(jitter) {}
+        particleRadius(particleRadius),
+        particleColor(particleColor) {}
     
-    void setPosition(const Vec3f position) { this->position = position; }
     virtual void updateParticles(const float time, const float deltaT, const std::vector<Surface>& surfaces);
+
+    void setPosition(const Vec3f position) { this->position = position; }
+    void setEmissionRate(const float emissionRate) { this->emissionRate = emissionRate; }
+    void setJitter(const Vec3f jitter) { this->jitter = jitter; }
 };
 
 class ParticleSystem {
