@@ -589,6 +589,11 @@ void ModelerUI::cb_loop(Fl_Light_Button* o, void* v)
 	((ModelerUI*)(o->user_data()))->cb_loop_i(o,v);
 }
 
+void ModelerUI::cb_showHitNormals(Fl_Light_Button* o, void* v)
+{
+    ((ModelerUI*)(o->user_data()))->showHitNormals(o->value() == 1);
+}
+
 inline void ModelerUI::cb_simulate_i(Fl_Light_Button* o, void*) 
 {
 }
@@ -852,6 +857,16 @@ void ModelerUI::setValueChangedCallback(ValueChangedCallback* pcbf)
 	m_pcbfValueChangedCallback = pcbf;
 }
 
+bool ModelerUI::showHitNormals() const
+{
+    return m_bShowHitNormals;
+}
+
+void ModelerUI::showHitNormals(bool showHitNormals)
+{
+    m_bShowHitNormals = showHitNormals;
+}
+
 bool ModelerUI::simulate() const
 {
 	if (m_bAnimating && m_pbtSimulate->value())
@@ -994,7 +1009,8 @@ m_nativeChooser(NULL)
 	m_pbtStepForw->callback((Fl_Callback*)cb_stepForw);
 	m_pbtClearSim->callback((Fl_Callback*)cb_clearSim);
 	m_pbtLoop->callback((Fl_Callback*)cb_loop);
-	m_pbtSimulate->callback((Fl_Callback*)cb_simulate);
+    m_pbtShowHitNormals->callback((Fl_Callback*)cb_showHitNormals);
+    m_pbtSimulate->callback((Fl_Callback*)cb_simulate);
 	m_psldrFPS->callback((Fl_Callback*)cb_fps);
     m_psldrRestitution->callback((Fl_Callback*)cb_restitutionConstant);
     

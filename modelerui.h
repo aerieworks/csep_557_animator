@@ -47,6 +47,8 @@ public:
 	void fps(int fps);
     float restitutionConstant();
     void restitutionConstant(float restitutionConstant);
+    bool showHitNormals() const;
+    void showHitNormals(bool showHitNormals);
 	bool simulate() const;
 	void simulate(bool bSimulate);
 	void redrawModelerView();
@@ -72,6 +74,7 @@ private:
 
 	bool m_bAnimating;
 	bool m_bSaveMovie;
+    bool m_bShowHitNormals;
 	int m_iFps;
     float m_fRestitutionConstant;
 	float m_fPlayStartTime, m_fPlayEndTime;
@@ -148,6 +151,7 @@ private:
 	static void cb_stepForw(Fl_Button*, void*);
 	inline void cb_clearSim_i(Fl_Button*, void*);
 	static void cb_clearSim(Fl_Button*, void*);
+    static void cb_showHitNormals(Fl_Light_Button*, void*);
 	inline void cb_simulate_i(Fl_Light_Button*, void*);
 	static void cb_simulate(Fl_Light_Button*, void*);
 	inline void cb_loop_i(Fl_Light_Button*, void*);

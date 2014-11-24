@@ -208,6 +208,11 @@ float ModelerApplication::GetRestitutionConstant()
     return m_ui->restitutionConstant();
 }
 
+bool ModelerApplication::ShowHitNormals()
+{
+    return m_ui->showHitNormals();
+}
+
 void ModelerApplication::ValueChangedCallback()
 {
 

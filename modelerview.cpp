@@ -125,6 +125,22 @@ void ModelerView::draw()
 		ps->computeForcesAndUpdateParticles(t);
 		ps->drawParticles(t);
 	}
+    
+    if (ModelerApplication::Instance()->ShowHitNormals())
+    {
+        glLineWidth(1);
+        glDisable(GL_LIGHTING);
+        glColor3f(0, 1, 0);
+        auto collisions = ModelerApplication::Instance()->GetCollisions();
+        for (auto coll = collisions.cbegin(); coll != collisions.cend(); ++coll)
+        {
+            glBegin(GL_LINES);
+            glVertex3f(coll->location[0], coll->location[1], coll->location[2]);
+            glVertex3f(coll->location[0] + coll->normal[0], coll->location[1] + coll->normal[1], coll->location[2] + coll->normal[2]);
+            glEnd();
+        }
+        glEnable(GL_LIGHTING);
+    }
 }
 
 

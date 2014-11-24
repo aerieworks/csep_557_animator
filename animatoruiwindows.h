@@ -64,6 +64,7 @@ public:
   Fl_Button *m_pbtPlay;
   Fl_Button *m_pbtStepForw;
   Fl_Light_Button *m_pbtLoop;
+  Fl_Light_Button *m_pbtShowHitNormals;
   Fl_Light_Button *m_pbtSimulate;
   Fl_Value_Slider *m_psldrRestitution;
   Fl_Value_Slider *m_psldrFPS;

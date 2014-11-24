@@ -89,6 +89,9 @@ public:
     // Return the restitution constant for collisions.
     float GetRestitutionConstant();
     
+    // Returns whether or not to draw normals indicating collisions.
+    bool ShowHitNormals();
+    
 private:
 	// Private for singleton
 	ModelerApplication() : m_numControls(-1) { ps = 0; }

@@ -161,6 +161,10 @@ ModelerUIWindows::ModelerUIWindows() {
             o->labelsize(12);
             o->user_data((void*)(this));
           }
+          { Fl_Light_Button* o = m_pbtShowHitNormals = new Fl_Light_Button(335, 555, 80, 20, "&Hit Normals");
+            o->labelsize(12);
+            o->user_data((void*)(this));
+          }
           { Fl_Light_Button* o = m_pbtSimulate = new Fl_Light_Button(335, 580, 70, 20, "&Simulate");
             o->labelsize(12);
             o->user_data((void*)(this));
