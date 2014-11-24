@@ -173,9 +173,19 @@ void ModelerApplication::ResetCollidables()
 {
     for (auto c_ptr = collidables.begin(); c_ptr != collidables.end(); ++c_ptr)
     {
-        delete *c_ptr;
+        delete (*c_ptr);
     }
     collidables.clear();
+}
+
+const std::vector<Collision> ModelerApplication::GetCollisions() const
+{
+    return collisions;
+}
+
+void ModelerApplication::AddCollision(Collision collision)
+{
+    collisions.push_back(collision);
 }
 
 float ModelerApplication::GetTime()

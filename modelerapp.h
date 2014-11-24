@@ -74,6 +74,9 @@ public:
     void AddCollidable(Collidable *collidable);
     void ResetCollidables();
     
+    const std::vector<Collision> GetCollisions() const;
+    void AddCollision(Collision collision);
+    
 	// Return the current time
 	float GetTime();
 
@@ -106,6 +109,7 @@ private:
     
     // Collidable object variables
     std::vector<Collidable*> collidables;
+    std::vector<Collision> collisions;
 };
 
 #endif

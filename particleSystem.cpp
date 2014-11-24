@@ -26,10 +26,11 @@ void ParticleCollection::updatePosition(const float deltaT, Particle& particle)
         Collision collision;
         if ((*collidable)->testCollision(particle, deltaT, collision))
         {
+            ModelerApplication::Instance()->AddCollision(collision);
             particle.position += collision.time * particle.velocity + particle.radius * collision.normal;
             Vec3f vNormal = (collision.normal * particle.velocity) * collision.normal;
             Vec3f vTangent = particle.velocity - vNormal;
-            particle.velocity = vTangent - 0.4 * vNormal;
+            particle.velocity = vTangent - 0.5 * vNormal;
             remainingT -= collision.time;
             break;
         }
@@ -80,6 +81,7 @@ void ParticleEmitter::updateParticles(const float time, const float deltaT)
     if (time - lastEmissionTime > (1.0 / emissionRate)) {
         Particle p(time, particleMass, position, particleRadius, particleColor);
         p.velocity = jitterVelocity();
+        p.velocity[0] -= 3.0;
         particles.push_back(p);
         lastEmissionTime = time;
     }
