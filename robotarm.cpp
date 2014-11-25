@@ -186,11 +186,19 @@ void RobotArm::pole(const Mat4f cameraTransforms)
 {
     setDiffuseColor(0, 0, 1);
     glPushMatrix();
-    glTranslatef(-5.0, 0, 0.25);
+    glTranslatef(-5.0, 0, 0.5);
     glRotatef(-90, 1, 0, 0);
     Mat4f modelTransforms = cameraTransforms.inverse() * getModelViewMatrix();
     drawCylinder(5.0, 0.5, 0.5);
     ModelerApplication::Instance()->AddCollidable(new CollidableCylinder(modelTransforms, 5.0, 0.5));
+    glPopMatrix();
+    
+    glPushMatrix();
+    glTranslatef(-2.5, 0, 0);
+    glRotatef(-90, 1, 0, 0);
+    modelTransforms = cameraTransforms.inverse() * getModelViewMatrix();
+    drawCylinder(1, 2, 2);
+    ModelerApplication::Instance()->AddCollidable(new CollidableCylinder(modelTransforms, 1, 2.0));
     glPopMatrix();
 }
 
