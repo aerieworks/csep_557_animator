@@ -75,11 +75,11 @@ public:
           airResistance(0.25)
     {
         dirtDumper.setEmissionRate(1);
-        dirtDumper.setJitter(Vec3f(0.25, 0.25, 0.25));
+        dirtDumper.setInitialVelocity(Vec3f(-3.0, 0, 0));
+        dirtDumper.setVelocityJitter(Vec3f(0.25, 0.25, 0.25));
         dirtDumper.setMaxParticleAge(6.0);
         
         dirtDumper.addForce(gravity);
-        dirtDumper.addForce(wind);
         dirtDumper.addForce(airResistance);
         ParticleSystem* ps = ModelerApplication::Instance()->GetParticleSystem();
         ps->addParticleCollection(&dirtDumper);

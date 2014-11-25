@@ -54,14 +54,15 @@ class ParticleEmitter : public ParticleCollection {
     float particleRadius;
     Vec3f particleColor;
     float emissionRate;
-    Vec3f jitter;
+    Vec3f initialVelocity;
+    Vec3f velocityJitter;
     float lastEmissionTime;
     
-    Vec3f jitterVelocity() {
-        Vec3f velocity;
+    Vec3f calcluateInitialVelocity() {
+        Vec3f velocity(initialVelocity);
         for (int i = 0; i < 3; i++) {
             const float factor = (float)(rand() % 100) / 100.0;
-            velocity[i] = factor * jitter[i] - jitter[i] / 2.0;
+            velocity[i] = factor * velocityJitter[i] - velocityJitter[i] / 2.0;
         }
         
         return velocity;
@@ -79,7 +80,8 @@ public:
 
     void setPosition(const Vec3f position) { this->position = position; }
     void setEmissionRate(const float emissionRate) { this->emissionRate = emissionRate; }
-    void setJitter(const Vec3f jitter) { this->jitter = jitter; }
+    void setInitialVelocity(const Vec3f initialVelocity) { this->initialVelocity = initialVelocity; }
+    void setVelocityJitter(const Vec3f velocityJitter) { this->velocityJitter = velocityJitter; }
 };
 
 class ParticleSystem {

@@ -87,7 +87,7 @@ void ParticleEmitter::updateParticles(const float time, const float deltaT)
 {
     if (time - lastEmissionTime > (1.0 / emissionRate)) {
         Particle p(time, particleMass, position, particleRadius, particleColor);
-        p.velocity = jitterVelocity();
+        p.velocity = calcluateInitialVelocity();
         p.velocity[0] -= 3.0;
         particles.push_back(p);
         lastEmissionTime = time;
