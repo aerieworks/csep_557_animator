@@ -43,6 +43,7 @@ public:
     virtual void addForce(Force& force) { forces.push_back(&force); }
     virtual void updateParticles(const float time, const float deltaT);
     virtual void drawParticles(const float time);
+    virtual void reset() {}
     
     void setMaxParticleAge(const float maxParticleAge) { this->maxParticleAge = maxParticleAge; }
 };
@@ -72,7 +73,8 @@ public:
         particleMass(particleMass),
         particleRadius(particleRadius),
         particleColor(particleColor) {}
-    
+
+    virtual void reset();
     virtual void updateParticles(const float time, const float deltaT);
 
     void setPosition(const Vec3f position) { this->position = position; }

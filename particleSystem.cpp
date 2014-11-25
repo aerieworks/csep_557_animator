@@ -76,6 +76,13 @@ void ParticleCollection::drawParticles(const float time)
     }
 }
 
+void ParticleEmitter::reset()
+{
+    ParticleCollection::reset();
+    lastEmissionTime = 0;
+    particles.clear();
+}
+
 void ParticleEmitter::updateParticles(const float time, const float deltaT)
 {
     if (time - lastEmissionTime > (1.0 / emissionRate)) {
@@ -146,7 +153,12 @@ void ParticleSystem::startSimulation(float t)
 void ParticleSystem::stopSimulation(float t)
 {
     
-	// TODO
+    prevT = 0;
+    for (auto pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
+    {
+        (*pc_iter)->reset();
+    }
+    
     printf("Stopping simulation.\n");
 	// These values are used by the UI
 	simulate = false;
