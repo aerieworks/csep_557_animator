@@ -13,6 +13,7 @@
 #include "modelerdraw.h"
 #include "particleSystem.h"
 #include "mat.h"
+#include "skirt.h"
 
 
 
@@ -62,6 +63,7 @@ private:
     ConstantForce wind;
     ViscousDrag airResistance;
     ParticleEmitter dirtDumper;
+    Skirt skirt;
     
     Mat4f getModelViewMatrix() const;
     void updateDirtDumper(const Mat4f cameraTransforms);
@@ -72,7 +74,8 @@ public:
           dirtDumper(0.25, 0.25, Vec3f(0.43, 0.26, 0.09)),
           gravity(Vec3f(0, -9.81, 0)),
           wind(Vec3f(-3.0, 0, 0)),
-          airResistance(0.25)
+          airResistance(0.25),
+          skirt(Mat4f::createTranslation(0, 5, 0), 1.0, 2.0)
     {
         dirtDumper.setEmissionRate(1);
         dirtDumper.setInitialVelocity(Vec3f(-3.0, 0, 0));
@@ -82,7 +85,8 @@ public:
         dirtDumper.addForce(gravity);
         dirtDumper.addForce(airResistance);
         ParticleSystem* ps = ModelerApplication::Instance()->GetParticleSystem();
-        ps->addParticleCollection(&dirtDumper);
+        //ps->addParticleCollection(&dirtDumper);
+        ps->addParticleCollection(&skirt);
     }
     virtual void draw();
 };
@@ -134,8 +138,10 @@ void RobotArm::draw()
 
 	// define the model
 
+    skirt.addSurfaces();
 	ground(-0.2);
 
+    /*
     pole(cameraTransforms);
     
     glTranslatef(5.0, 0, 0);
@@ -160,6 +166,7 @@ void RobotArm::draw()
 	claw(1.0);
 
     updateDirtDumper(cameraTransforms);
+     */
 
 }
 

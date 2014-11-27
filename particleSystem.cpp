@@ -16,6 +16,14 @@ static float prevT;
 
 #define TIME_EPSILON (0.01)
 
+ParticleCollection::~ParticleCollection()
+{
+    for (auto p_iter = particles.begin(); p_iter != particles.end(); ++p_iter)
+    {
+        delete (*p_iter);
+    }
+}
+
 void ParticleCollection::updatePosition(const float deltaT, Particle& particle)
 {
     auto collidables = ModelerApplication::Instance()->GetCollidables();
@@ -42,23 +50,28 @@ void ParticleCollection::updatePosition(const float deltaT, Particle& particle)
 void ParticleCollection::updateParticles(const float time, const float deltaT)
 {
     // Default implementation assumes all forces in collection apply to all particles.
-    for (auto particle = particles.begin(); particle != particles.end(); )
+    for (auto p_iter = particles.begin(); p_iter != particles.end(); )
     {
-        if (time - particle->getCreationTime() >= maxParticleAge)
+        Particle& particle = **p_iter;
+        if (maxParticleAge > 0 && time - particle.getCreationTime() >= maxParticleAge)
         {
             // Remove particles that have expired.
-            particles.erase(particle);
+            delete (*p_iter);
+            particles.erase(p_iter);
         }
         else
         {
-            Vec3f deltaV;
-            for (auto force = forces.cbegin(); force != forces.cend(); ++force)
+            if (!particle.fixed())
             {
-                deltaV += (*force)->computeForce(*particle, time) / particle->mass * deltaT;
+                Vec3f deltaV;
+                for (auto force = forces.cbegin(); force != forces.cend(); ++force)
+                {
+                    deltaV += (*force)->computeForce(particle, time) * deltaT;
+                }
+                updatePosition(deltaT, particle);
+                particle.velocity += deltaV;
             }
-            updatePosition(deltaT, *particle);
-            particle->velocity += deltaV;
-            ++particle;
+            ++p_iter;
         }
     }
 }
@@ -68,10 +81,11 @@ void ParticleCollection::drawParticles(const float time)
     // Default implementation renders all particles as simple brown spheres.
     for (auto p_iter = particles.cbegin(); p_iter != particles.cend(); ++p_iter)
     {
+        Particle& p = **p_iter;
         glPushMatrix();
-        setDiffuseColor(p_iter->color[0], p_iter->color[1], p_iter->color[2]);
-        glTranslatef(p_iter->position[0], p_iter->position[1], p_iter->position[2]);
-        drawSphere(p_iter->radius);
+        setDiffuseColor(p.color[0], p.color[1], p.color[2]);
+        glTranslatef(p.position[0], p.position[1], p.position[2]);
+        drawSphere(p.radius);
         glPopMatrix();
     }
 }
@@ -86,9 +100,9 @@ void ParticleEmitter::reset()
 void ParticleEmitter::updateParticles(const float time, const float deltaT)
 {
     if (time - lastEmissionTime > (1.0 / emissionRate)) {
-        Particle p(time, particleMass, position, particleRadius, particleColor);
-        p.velocity = calcluateInitialVelocity();
-        p.velocity[0] -= 3.0;
+        Particle* p = new Particle(time, particleMass, position, particleRadius, particleColor);
+        p->velocity = calcluateInitialVelocity();
+        p->velocity[0] -= 3.0;
         particles.push_back(p);
         lastEmissionTime = time;
     }
@@ -181,22 +195,25 @@ void ParticleSystem::resetSimulation(float t)
 /** Compute forces and update particles **/
 void ParticleSystem::computeForcesAndUpdateParticles(float t)
 {
+    // Debugging info
+    if( t - prevT > .04 )
+        printf("(!!) Dropped Frame %lf (!!)\n", t-prevT);
+
     if (!simulate)
     {
         return;
     }
     
-    const float deltaT = t - prevT;
-    for (auto pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
-    {
-        ParticleCollection* pc = *pc_iter;
-        pc->updateParticles(t, deltaT);
+    printf("Time: %f\n", t);
+    const float deltaT = (t - prevT) / 10.0;
+    while (prevT < t) {
+        prevT += deltaT;
+        for (auto pc_iter = particleCollections.begin(); pc_iter != particleCollections.end(); ++pc_iter)
+        {
+            ParticleCollection* pc = *pc_iter;
+            pc->updateParticles(prevT, deltaT);
+        }
     }
-    
-	// Debugging info
-	if( t - prevT > .04 )
-		printf("(!!) Dropped Frame %lf (!!)\n", t-prevT);
-	prevT = t;
 }
 
 

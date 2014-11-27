@@ -63,6 +63,7 @@ public:
 class CollidableQuad : public Surface {
     const Vec3f a, b, c, d;
     const float surfaceD;
+    std::vector<Particle*> exclusions;
     
 protected:
     virtual bool isInBounds(const Particle& particle, const float deltaT, Collision& collision) const {
@@ -92,6 +93,19 @@ public:
         c(c),
         d(d),
         surfaceD(normal * a) {
+    }
+    
+    void exclude(Particle* p) {
+        exclusions.push_back(p);
+    }
+    
+    virtual bool testCollision(const Particle& particle, const float deltaT, Collision& collision) const {
+        for (auto ex_ptr = exclusions.cbegin(); ex_ptr != exclusions.cend(); ++ex_ptr) {
+            if ((*ex_ptr) == &particle) {
+                return false;
+            }
+        }
+        return Surface::testCollision(particle, deltaT, collision);
     }
 };
 

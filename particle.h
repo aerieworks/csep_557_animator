@@ -13,6 +13,7 @@
 
 class Particle {
     float creationTime;
+    bool isFixed;
     
 public:
     float mass;
@@ -28,9 +29,12 @@ public:
         mass(mass),
         position(position),
         radius(radius),
+        isFixed(false),
         color(color) {}
     
     float getCreationTime() const { return creationTime; }
+    bool fixed() const { return isFixed; }
+    void fixed(const bool isFixed) { this->isFixed = isFixed; }
 };
 
 #endif

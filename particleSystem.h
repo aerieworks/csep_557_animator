@@ -24,6 +24,7 @@
 #pragma warning(disable : 4305)
 
 #include <vector>
+#include <iostream>
 #include "force.h"
 #include "particle.h"
 #include "collidable.h"
@@ -34,12 +35,13 @@ class ParticleCollection {
     
     virtual void updatePosition(const float deltaT, Particle& particle);
 public:
-    std::vector<Particle> particles;
+    std::vector<Particle*> particles;
     std::vector<Force*> forces;
     
     ParticleCollection() : maxParticleAge(-1) {}
+    virtual ~ParticleCollection();
     
-    virtual void addParticle(Particle particle) { particles.push_back(particle); }
+    virtual void addParticle(Particle* particle) { particles.push_back(particle); }
     virtual void addForce(Force& force) { forces.push_back(&force); }
     virtual void updateParticles(const float time, const float deltaT);
     virtual void drawParticles(const float time);
