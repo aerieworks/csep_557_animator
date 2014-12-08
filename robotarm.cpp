@@ -69,12 +69,12 @@ private:
 public:
     RobotArm(int x, int y, int w, int h, char *label) 
         : ModelerView(x,y,w,h,label),
-          dirtDumper(0.25, 0.25, Vec3f(0.43, 0.26, 0.09)),
+          dirtDumper(0.25, 0.05, Vec3f(0.43, 0.26, 0.09)),
           gravity(Vec3f(0, -9.81, 0)),
           wind(Vec3f(-3.0, 0, 0)),
           airResistance(0.25)
     {
-        dirtDumper.setEmissionRate(1);
+        dirtDumper.setEmissionRate(50);
         dirtDumper.setInitialVelocity(Vec3f(-3.0, 0, 0));
         dirtDumper.setVelocityJitter(Vec3f(0.25, 0.25, 0.25));
         dirtDumper.setMaxParticleAge(6.0);
@@ -191,14 +191,6 @@ void RobotArm::pole(const Mat4f cameraTransforms)
     Mat4f modelTransforms = cameraTransforms.inverse() * getModelViewMatrix();
     drawCylinder(5.0, 0.5, 0.5);
     ModelerApplication::Instance()->AddCollidable(new CollidableCylinder(modelTransforms, 5.0, 0.5));
-    glPopMatrix();
-    
-    glPushMatrix();
-    glTranslatef(-2.5, 0, 0);
-    glRotatef(-90, 1, 0, 0);
-    modelTransforms = cameraTransforms.inverse() * getModelViewMatrix();
-    drawCylinder(1, 2, 2);
-    ModelerApplication::Instance()->AddCollidable(new CollidableCylinder(modelTransforms, 1, 2.0));
     glPopMatrix();
 }
 
@@ -345,6 +337,7 @@ void y_box(float h) {
 	glEnd();
 }
 
+/*
 int main()
 {
     ModelerControl controls[NUMCONTROLS ];
@@ -372,3 +365,4 @@ int main()
     ModelerApplication::Instance()->SetParticleSystem(NULL);
     return result;
 }
+*/

@@ -95,8 +95,8 @@ void ModelerApplication::Init(ModelerViewCreator_f createView,
 
 	// Add controls for camera properties.  By convention, these
 	// appear at the end of the list after the model's controls
-	m_ui->addControl("Azimuth",	  -20,  20, 0.5f,   0.0f);
-	m_ui->addControl("Elevation", -1.6,  1.6, 0.5f,   0.7f);
+	m_ui->addControl("Azimuth",	  -20,  20, 0.1f,   3.14f);
+	m_ui->addControl("Elevation", -1.6,  1.6, 0.1f,   0.5f);
 	m_ui->addControl("Dolly",	 -100,  10, 0.5f, -30.0f);
 	m_ui->addControl("Twist",	 -360, 360, 5.0f,   0.0f);
 	m_ui->addControl("LookAt X",  -50,  50, 0.5f,   0.0f);

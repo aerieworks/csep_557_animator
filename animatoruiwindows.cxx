@@ -207,6 +207,7 @@ ModelerUIWindows::ModelerUIWindows() {
         }
         { Fl_Slider* o = m_psldrTimeSlider = new Fl_Slider(185, 635, 390, 20);
           o->type(5);
+          o->step(0.01);
           o->user_data((void*)(this));
         }
         { Fl_Slider* o = m_psldrPlayStart = new Fl_Slider(185, 655, 390, 20);

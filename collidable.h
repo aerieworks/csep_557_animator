@@ -46,7 +46,7 @@ public:
     }
     
     virtual bool testCollision(const Particle& particle, const float deltaT, Collision& collision) const {
-        if (fabs((particle.position - point) * normal) < COLLISION_EPSILON) {
+        if ((particle.position - point) * normal <= COLLISION_EPSILON) {
             if (particle.velocity * normal <= 0) {
                 collision.normal = normal;
                 collision.time = deltaT;
